@@ -1,19 +1,26 @@
-## 概要
-[TBDのWeb5 JS SDKとSSI SDKを試す(中編)](https://tech.gmogshd.com/try-web5-2/)
+## Overview
+This repository is a frontend application for issuing ACDC.  
+The main processes are found in `modules/repository.ts` and consist of the following two components:
 
-## ローカルで起動
-1. `yarn install`
-1. `.env.dev`を用意する。以下、環境変数。
-    - `VITE_VUETIFY_THEME`
-        - `lightTheme` (default)
-        - `darkTheme`
-    - `VITE_REMOTE_DWN_ENDPOINT` 
-        - e.g. https://foobar.com
-2. `yarn dev`
+- **SignifyRepository Interface**  
+    - The implementation instance encapsulates the Signify library and provides abstracted methods to each view.
 
-## ローカルでデモ実行
-1. memo-dwa-demo/alice, memo-dwa-demo/bob配下に.env.devを用意して上記環境変数を記述する。
-2. memo-dwa-demoディレクトリ上で`docker compose up`
-    - Alice: http://localhost:3000
-    - Bob: http://localhost:4000
+- **Signifies Class**  
+    - A companion class to the SignifyRepository interface, equipped with factory methods and more.
 
+The screen transitions start from `Init.vue`. For routing details, please refer to `router/index.ts`.
+
+To run this, a KERIA Agent and a Witness are required.
+Please follow the steps below.
+
+## Demo on Local
+1. Setup KERIA Agent, Witness, and vLEI Server
+2. Create `.env.dev` file and set those env vars. (See `.env` file as reference.)
+3. run `yarn dev`
+
+## Miscellaneous
+Please add the following command in .husky/pre-commit if you want to enable huskey.
+
+```bash
+yarn run pre-commit
+```

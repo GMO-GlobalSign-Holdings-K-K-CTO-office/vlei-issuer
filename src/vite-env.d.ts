@@ -7,8 +7,10 @@ declare module "*.vue" {
 }
 
 interface ImportMetaEnv {
-  readonly VITE_VUETIFY_THEME: string;
-  readonly VITE_REMOTE_DWN_ENDPOINT: string;
+  readonly VITE_KERIA_ADMIN_INTERFACE_URL: string;
+  readonly VITE_KERIA_BOOT_INTERFACE_URL: string;
+  readonly VITE_WITNESS_URLS: string;
+  readonly VITE_VLEI_SERVER_URL: string;
 }
 
 interface ImportMeta {

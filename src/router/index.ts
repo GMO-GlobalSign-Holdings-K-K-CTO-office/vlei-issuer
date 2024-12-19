@@ -1,10 +1,12 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 import Content from "@/views/template/Content.vue";
-import MemoList from "@/views/MemoList.vue";
 import Init from "@/views/Init.vue";
 import ErrorDestination from "@/views/ErrorDestination.vue";
-import { isPartnerRegistered } from "@/modules/common";
+import HolderList from "@/views/HolderList.vue";
+import HolderDetail from "@/views/HolderDetail.vue";
+import Profile from "@/views/Profile.vue";
+import { Signifies } from "@/modules/repository";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,28 +20,41 @@ const router = createRouter({
       },
       children: [
         {
-          path: "/memos",
-          name: "MemoList",
-          component: MemoList,
-          meta: { title: "一覧" },
+          path: "/holder-list",
+          name: "HolderList",
+          component: HolderList,
+          meta: { title: "Holde List" },
+        },
+        {
+          path: "/holder-detail/:pre/",
+          name: "HolderDetail",
+          component: HolderDetail,
+          meta: { title: "Holder Detail" },
+        },
+        {
+          path: "/profile",
+          name: "Profile",
+          component: Profile,
+          meta: { title: "Profile" },
         },
       ],
     },
     {
       path: "/init",
       name: "Init",
-      meta: { title: "開始" },
+      meta: { title: "Initiation" },
       component: Init,
-      // beforeEnter: async (to, from, next) => {
-      //   // 初期化済みの場合はメモ一覧画面に遷移する
-      //   if (Web5s.isInstanceCreated()) {
-      //     next({
-      //       path: "/memos",
-      //     });
-      //   } else {
-      //     next();
-      //   }
-      // },
+      beforeEnter: async (to, from, next) => {
+        if (Signifies.isInitiationDone()) {
+          // Move to the next page if the initiation is done.
+          // Note: Assume that there is no multiple master secrets(aid).
+          next({
+            path: "/holder-list",
+          });
+        } else {
+          next();
+        }
+      },
     },
     {
       path: "/error",
@@ -50,10 +65,12 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
+  next();
   if (to.matched.some((record) => record.meta.requiresInit)) {
-    if (isPartnerRegistered() || from.name === "Init") {
+    if (Signifies.isInitiationDone()) {
       next();
     } else {
+      // Move to the initiation page if the initiation is not done.
       next({
         path: "/init",
       });
