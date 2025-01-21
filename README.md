@@ -15,8 +15,7 @@ Please follow the steps below.
 
 ## Demo on Local
 1. Setup KERIA Agent, Witness, and vLEI Server
-2. Create `.env.dev` file and set those env vars. (See `.env` file as reference.)
-3. run `yarn dev`
+2. run `yarn dev`
 
 ## Miscellaneous
 Please add the following command in .husky/pre-commit if you want to enable huskey.

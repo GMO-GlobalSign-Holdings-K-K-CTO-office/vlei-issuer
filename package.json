@@ -8,7 +8,7 @@
     }
   },
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS='--no-warnings' vite --mode dev",
+    "dev": "cross-env NODE_OPTIONS='--no-warnings' vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ignore-path .gitignore",
