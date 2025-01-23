@@ -7,8 +7,10 @@ export interface OobiIpexHandler {
   progress(client: signify.SignifyClient, holder: Contact): Promise<void>;
 }
 
-// OOBI Part
+// Note: 現状、各Handlerの最後に状態を遷移させてはいない。
+// フロントとAgentで二重管理にするのは避けたいので、Agent側の状態を確認して、逐次状態を反映させる。
 
+// OOBI Part
 export class MyChallengeSender implements OobiIpexHandler {
   async progress(client: signify.SignifyClient, holder: Contact) {
     console.log("ChallengeSender started.");
@@ -169,6 +171,6 @@ export type OobiIpexState =
   | "2_3_response_validated" // レスポンス検証済み
   | "3_1_challenge_received" // チャレンジ受理
   | "3_2_response_sent" // レスポンス送信済み
-  | "4_ready_to_issue" // レスポンス送信済み
-  | "5_issuing" // 発行中
-  | "6_issue_accepted"; // 発行済み
+  | "3_3_response_validated" // 送信したレスポンスが検証済み
+  | "4_1_issuing" // 発行中
+  | "4_2_issue_accepted"; // 発行済み

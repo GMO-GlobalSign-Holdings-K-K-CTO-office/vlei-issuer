@@ -156,13 +156,13 @@ const holderRegistered = async () => {
 const oobiIpexButtonTextMap: Map<OobiIpexState, string> = new Map();
 oobiIpexButtonTextMap.set("1_init", "Init");
 oobiIpexButtonTextMap.set("2_1_challenge_sent", "Challenge Sent");
-oobiIpexButtonTextMap.set("2_2_response_received", "Varidate Response");
+oobiIpexButtonTextMap.set("2_2_response_received", "Validate Response"); // active
 oobiIpexButtonTextMap.set("2_3_response_validated", "Response Validated");
-oobiIpexButtonTextMap.set("3_1_challenge_received", "Send Response");
+oobiIpexButtonTextMap.set("3_1_challenge_received", "Send Response"); // active
 oobiIpexButtonTextMap.set("3_2_response_sent", "Response Sent");
-oobiIpexButtonTextMap.set("4_ready_to_issue", "Issue Credential");
-oobiIpexButtonTextMap.set("5_issuing", "Issueing Credential");
-oobiIpexButtonTextMap.set("6_issue_accepted", "Issued Credential");
+oobiIpexButtonTextMap.set("3_3_response_validated", "Issue Credential"); // active
+oobiIpexButtonTextMap.set("4_1_issuing", "Issueing Credential");
+oobiIpexButtonTextMap.set("4_2_issue_accepted", "Issued Credential");
 
 /**
  *  Check if the Ipex State can proceed.
@@ -174,7 +174,7 @@ const canIpexStateProceed = (state: OobiIpexState): boolean => {
   return (
     state === "2_2_response_received" ||
     state === "3_1_challenge_received" ||
-    state === "4_ready_to_issue"
+    state === "3_3_response_validated"
   );
 };
 </script>

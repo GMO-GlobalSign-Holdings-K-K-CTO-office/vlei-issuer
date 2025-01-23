@@ -77,22 +77,23 @@ export class Signifies {
             import.meta.env.VITE_KERIA_BOOT_INTERFACE_URL,
           );
 
-          const ipexHandlers: Map<OobiIpexState, OobiIpexHandler> = new Map();
+          // Mapping of oobi state to its handler
+          const ipexHandlerMap: Map<OobiIpexState, OobiIpexHandler> = new Map();
           // oobi part
-          ipexHandlers.set("1_init", new MyChallengeSender());
-          ipexHandlers.set(
+          ipexHandlerMap.set("1_init", new MyChallengeSender());
+          ipexHandlerMap.set(
             "2_2_response_received",
             new YourResponseValidator(),
           );
-          ipexHandlers.set("3_1_challenge_received", new MyResponseSender());
+          ipexHandlerMap.set("3_1_challenge_received", new MyResponseSender());
 
           // ipex part
-          ipexHandlers.set("4_ready_to_issue", new AcdcIssuer());
-          ipexHandlers.set("6_issue_accepted", new AdmitMarker());
+          ipexHandlerMap.set("3_3_response_validated", new AcdcIssuer());
+          ipexHandlerMap.set("4_2_issue_accepted", new AdmitMarker());
 
           const defaultInstance = new SignifyRepositoryDefaultImpl(
             client,
-            ipexHandlers,
+            ipexHandlerMap,
           );
           defaultInstance.connectToKeriaAgent();
           Signifies.instances.set(type, defaultInstance);
@@ -414,11 +415,25 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     const holders = (await this.client.contacts().list()) as Contact[];
     console.log(`Holders: ${JSON.stringify(holders, null, 2)}`);
 
-    // TODO: Important!! ここでStatusの設定を行う。
+    // TODO: Important!! ここでStatusの設定を行う。(1)
 
-    // Issueの最後のステップ
-    // TODO: Statusの設定の中で、AdmitのNotificationの情報を取得して、存在すればStatusに6_issue_acceptedを設定する。
-    // TODO: そして、ooib-ipex.tsのAdmitMarkerを呼び出す。
+    // TODO: **Notification**の取得
+    // (1)-a. Holder Responseの取得を行う。
+    //    Statusの設定の中で、Response受信のNotification情報を取得して、存在すればStatusに2_2_response_receivedを設定する。
+    //    Contatに対しNotificationを設定し画面に返し、ボタンが活性化される。(Validateへ)
+    // 参考: github.com/WebOfTrust/signify-ts/blob/cddb00713ce7b09b3f18acdaae559703759369bc/examples/integration-scripts/utils/test-util.ts#L479
+
+    // (1)-b. Holder Challengeを取得する。
+    //     Statusの設定の中で、ChallengeのNotification情報を取得して、存在すればStatusに3_1_challenge_receivedを設定する。
+    //     Contatに対しNotificationを設定し画面に返し、ボタンが活性化される。(Responseの送信へ)
+
+    // (1)-c. My ResponseのValidate状態を取得する。
+    //     Statusの設定の中で、ResponseのNotification情報を取得して、存在すればStatusに3_3_response_validatedを設定する。
+    //     Contatに対しNotificationを設定し画面に返し、ボタンが活性化される。(Issueへ)
+
+    // (1)-d. Issueの最後のステップ
+    //     Statusの設定の中で、AdmitのNotificationの情報を取得して、存在すればStatusに6_issue_acceptedを設定する。
+    //     そして、ooib-ipex.tsのAdmitMarkerを呼び出す。
     // 参考: github.com/WebOfTrust/signify-ts/blob/cddb00713ce7b09b3f18acdaae559703759369bc/examples/integration-scripts/utils/test-util.ts#L479
 
     return [
