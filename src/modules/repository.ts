@@ -1,4 +1,4 @@
-import * as signify from "signify/signify-ts.mjs";
+import * as signify from "../../signify/signify-ts.mjs";
 import {
   IllegalArgumentException,
   IllegalStateException,
@@ -95,7 +95,7 @@ export class Signifies {
             client,
             ipexHandlerMap,
           );
-          defaultInstance.connectToKeriaAgent();
+          await defaultInstance.connectToKeriaAgent();
           Signifies.instances.set(type, defaultInstance);
           break;
         }

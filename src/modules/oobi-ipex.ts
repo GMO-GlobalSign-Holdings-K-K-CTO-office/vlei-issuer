@@ -1,4 +1,4 @@
-import * as signify from "signify/signify-ts.mjs";
+import * as signify from "../../signify/signify-ts.mjs";
 import { Contact } from "@/modules/repository";
 import { IllegalStateException } from "@/modules/exception";
 import { AID_NAME, QVI_SCHEMA_SAID } from "@/modules/const";

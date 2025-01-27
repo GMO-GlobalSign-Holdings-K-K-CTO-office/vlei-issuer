@@ -46,10 +46,14 @@ export default defineConfig({
       vueTemplate: true,
     }),
   ],
+  optimizeDeps: {
+    include: ['buffer']
+  },
   define: { "process.env": process.env, global: {} },
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      buffer: 'buffer'
     },
     extensions: [".js", ".json", ".jsx", ".mjs", ".ts", ".tsx", ".vue"],
   },
