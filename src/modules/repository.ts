@@ -265,11 +265,20 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
    * @returns AID
    */
   public async createOrRetrieveAid(): Promise<string> {
-    let aid = await this.client.identifiers().get(AID_NAME);
+    let aid: signify.Identifier | null = null;
+
+    try {
+      aid = await this.client.identifiers().get(AID_NAME);
+    } catch (e) {
+      console.log(`AID not found: ${
+        JSON.stringify(e, null, 2)}`);
+    }
+
     if (!aid) {
       // Creation of InceptionEvent (AID/KEL generation)
       const inceptionEventArgs: signify.CreateIdentiferArgs = {
         wits: [...import.meta.env.VITE_WITNESS_URLS.split(",")],
+        toad: 1,
       };
       const inceptionEvent = await this.client
         .identifiers()
