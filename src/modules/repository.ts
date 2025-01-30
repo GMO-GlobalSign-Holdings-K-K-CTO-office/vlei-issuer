@@ -71,7 +71,7 @@ export class Signifies {
       switch (type) {
         case "default": {
           const client = new signify.SignifyClient(
-            import.meta.env.VITE_KERIA_BOOT_INTERFACE_URL,
+            import.meta.env.VITE_KERIA_ADMIN_INTERFACE_URL,
             masterSecret,
             signify.Tier.low,
             import.meta.env.VITE_KERIA_BOOT_INTERFACE_URL,
