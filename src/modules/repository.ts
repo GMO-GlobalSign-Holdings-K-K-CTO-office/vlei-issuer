@@ -277,9 +277,14 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     if (!aid) {
       // Creation of InceptionEvent (AID/KEL generation)
       const inceptionEventArgs: signify.CreateIdentiferArgs = {
-        wits: [...import.meta.env.VITE_WITNESS_URLS.split(",")],
-        toad: 1,
+        toad: 0,
       };
+
+      if(import.meta.env.VITE_WITNESS_URLS){
+        inceptionEventArgs.wits = [...import.meta.env.VITE_WITNESS_URLS.split(",")];
+        inceptionEventArgs.toad = 1;
+      }
+
       const inceptionEvent = await this.client
         .identifiers()
         .create(AID_NAME, inceptionEventArgs);
