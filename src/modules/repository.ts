@@ -325,7 +325,7 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
   public async createOobi(): Promise<string> {
     const oobi = await this.client.oobis().get(AID_NAME, KERIA_ROLE);
     console.log(JSON.stringify(oobi, null, 2));
-    return oobi.oobi[0];
+    return oobi.oobis[0];
   }
 
   /**
