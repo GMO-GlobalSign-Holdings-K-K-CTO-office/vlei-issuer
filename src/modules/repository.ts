@@ -1,4 +1,4 @@
-import * as signify from "signify/signify-ts.mjs";
+import * as signify from "../../signify/signify-ts.mjs";
 import {
   IllegalArgumentException,
   IllegalStateException,
@@ -19,6 +19,7 @@ import {
   QVI_SCHEMA_URL,
   VLEI_REGISTRY_NAME,
 } from "@/modules/const";
+import { read } from "fs";
 /**
  * A companion class for the SignifyRepository interface,
  * providing factory methods and more.
@@ -28,9 +29,9 @@ export class Signifies {
     new Map();
 
   static {
-    (async () => {
-      await signify.ready();
-    })();
+    // (async () => {
+    //   await signify.ready();
+    // })();
   }
 
   private constructor() {}
@@ -70,8 +71,9 @@ export class Signifies {
     if (!Signifies.instances.has(type)) {
       switch (type) {
         case "default": {
+          await signify.ready();
           const client = new signify.SignifyClient(
-            import.meta.env.VITE_KERIA_BOOT_INTERFACE_URL,
+            import.meta.env.VITE_KERIA_ADMIN_INTERFACE_URL,
             masterSecret,
             signify.Tier.low,
             import.meta.env.VITE_KERIA_BOOT_INTERFACE_URL,
@@ -95,7 +97,7 @@ export class Signifies {
             client,
             ipexHandlerMap,
           );
-          defaultInstance.connectToKeriaAgent();
+          await defaultInstance.connectToKeriaAgent();
           Signifies.instances.set(type, defaultInstance);
           break;
         }
@@ -265,12 +267,26 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
    * @returns AID
    */
   public async createOrRetrieveAid(): Promise<string> {
-    let aid = await this.client.identifiers().get(AID_NAME);
+    let aid: signify.Identifier | null = null;
+
+    try {
+      aid = await this.client.identifiers().get(AID_NAME);
+    } catch (e) {
+      console.log(`AID not found: ${
+        JSON.stringify(e, null, 2)}`);
+    }
+
     if (!aid) {
       // Creation of InceptionEvent (AID/KEL generation)
       const inceptionEventArgs: signify.CreateIdentiferArgs = {
-        wits: [...import.meta.env.VITE_WITNESS_URLS.split(",")],
+        toad: 0,
       };
+
+      if(import.meta.env.VITE_WITNESS_URLS){
+        inceptionEventArgs.wits = [...import.meta.env.VITE_WITNESS_URLS.split(",")];
+        inceptionEventArgs.toad = 1;
+      }
+
       const inceptionEvent = await this.client
         .identifiers()
         .create(AID_NAME, inceptionEventArgs);
@@ -309,7 +325,7 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
   public async createOobi(): Promise<string> {
     const oobi = await this.client.oobis().get(AID_NAME, KERIA_ROLE);
     console.log(JSON.stringify(oobi, null, 2));
-    return oobi.oobi[0];
+    return oobi.oobis[0];
   }
 
   /**

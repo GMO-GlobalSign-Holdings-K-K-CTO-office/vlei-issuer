@@ -82,9 +82,13 @@ const init = async () => {
       masterSecret.value,
     );
 
-    await signifyRepository.createOrRetrieveAid();
-    await signifyRepository.createVcRegistry();
-    await signifyRepository.importVcSchema();
+    try {
+      await signifyRepository.createOrRetrieveAid();
+      await signifyRepository.createVcRegistry();
+      await signifyRepository.importVcSchema();
+    } catch (e) {
+      console.error(e);
+    }
 
     // for development purpose
     await signifyRepository.inspect();
