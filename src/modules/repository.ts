@@ -19,6 +19,7 @@ import {
   QVI_SCHEMA_URL,
   VLEI_REGISTRY_NAME,
 } from "@/modules/const";
+import { read } from "fs";
 /**
  * A companion class for the SignifyRepository interface,
  * providing factory methods and more.
@@ -28,9 +29,9 @@ export class Signifies {
     new Map();
 
   static {
-    (async () => {
-      await signify.ready();
-    })();
+    // (async () => {
+    //   await signify.ready();
+    // })();
   }
 
   private constructor() {}
@@ -70,6 +71,7 @@ export class Signifies {
     if (!Signifies.instances.has(type)) {
       switch (type) {
         case "default": {
+          await signify.ready();
           const client = new signify.SignifyClient(
             import.meta.env.VITE_KERIA_ADMIN_INTERFACE_URL,
             masterSecret,
