@@ -6,6 +6,7 @@ import ErrorDestination from "@/views/ErrorDestination.vue";
 import HolderList from "@/views/HolderList.vue";
 import HolderDetail from "@/views/HolderDetail.vue";
 import Profile from "@/views/Profile.vue";
+import EventHistory from "@/views/EventHistory.vue";
 import { Signifies } from "@/modules/repository";
 
 const router = createRouter({
@@ -37,6 +38,12 @@ const router = createRouter({
           component: Profile,
           meta: { title: "Profile" },
         },
+        {
+          path: "/event-history",
+          name: "EventHistory",
+          component: EventHistory,
+          meta: { title: "Event Hsitory" },
+        },
       ],
     },
     {
@@ -45,11 +52,11 @@ const router = createRouter({
       meta: { title: "Initiation" },
       component: Init,
       beforeEnter: async (to, from, next) => {
-        if (Signifies.isInitiationDone()) {
+        if (Signifies.isInitiationDone() && from.path !== "/error") {
           // Move to the next page if the initiation is done.
           // Note: Assume that there is no multiple master secrets(aid).
           next({
-            path: "/holder-list",
+            path: "/session-list",
           });
         } else {
           next();
@@ -65,7 +72,6 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  next();
   if (to.matched.some((record) => record.meta.requiresInit)) {
     if (Signifies.isInitiationDone()) {
       next();

@@ -1,5 +1,5 @@
 <template>
-  <di class="d-flex justify-center align-center login-container">
+  <div class="d-flex justify-center align-center login-container">
     <v-card rounded="lg">
       <v-img
         src="/login-img.jpg"
@@ -9,7 +9,7 @@
       >
         <v-card-title>ACDC Issuer</v-card-title>
       </v-img>
-      <v-form ref="form">
+      <v-form ref="form" class="mx-5 mt-2">
         <v-text-field
           v-model="masterSecret"
           variant="underlined"
@@ -18,14 +18,14 @@
           label="Master Secret"
           prepend-icon="mdi-lock"
           :append-icon="secretHidden ? 'mdi-eye-off' : 'mdi-eye'"
-          @click:append="secretHidden = !secretHidden"
+          @click:append="(secretHidden = !secretHidden)"
           color="accent"
           :rules="secretRules"
         ></v-text-field>
 
         <v-card-actions class="d-flex align-center flex-column">
           <v-btn
-            class="my-5"
+            class="mt-1 mb-2"
             variant="outlined"
             color="accent"
             @click="init"
@@ -33,7 +33,7 @@
             >Start</v-btn
           >
           <v-btn
-            class="my-5"
+            class="my-3"
             variant="outlined"
             color="accent"
             @click="createMasterSecret"
@@ -43,11 +43,20 @@
         </v-card-actions>
       </v-form>
     </v-card>
-  </di>
-  <v-snackbar v-model="newSecretSnackbar" color="primary" multi-line="true">
-    Your master secret is {{ masterSecret }}
+  </div>
+  <v-snackbar
+    v-model="newSecretSnackbar"
+    color="accent"
+    timeout="10000"
+    variant="outlined"
+    multi-line
+  >
+    {{ masterSecret }}
     <template v-slot:actions>
-      <v-btn color="accent" variant="text" @click="newSecretSnackbar = false">
+      <v-btn icon @click="copySecretText">
+        <v-icon size="small">mdi-content-copy</v-icon>
+      </v-btn>
+      <v-btn color="accent" variant="text" @click="(newSecretSnackbar = false)">
         Close
       </v-btn>
     </template>
@@ -60,7 +69,7 @@ import { Signifies } from "@/modules/repository";
 import { ErrorMessage } from "@/types";
 const router = useRouter();
 
-const form: Ref<any> = ref(null);
+const form: Ref = ref(null);
 
 const masterSecret = ref("");
 const secretHidden = ref(true);
@@ -82,40 +91,28 @@ const init = async () => {
       masterSecret.value,
     );
 
-    try {
-      await signifyRepository.createOrRetrieveAid();
-      await signifyRepository.createVcRegistry();
-      await signifyRepository.importVcSchema();
-    } catch (e) {
-      console.error(e);
-    }
+    await signifyRepository.createOrRetrieveAid();
+    await signifyRepository.createVcRegistry();
+    await signifyRepository.importVcSchema();
 
     // for development purpose
-    await signifyRepository.inspect();
+    // await signifyRepository.inspect();
   }
 
   router.push("/");
 };
-// Note: OOBI URLの作り方
-// const oobi = await client.oobis().get("myAid", "agent");
-// console.log(JSON.stringify(oobi, null, 2));
-
-// Rotation周り
-// const x = await client.identifiers().rotate("myAid");
-
-// Note: VC周り
-// const y = await client.credentials().xxx()
-
-// Note: IPEX周り
-// const z = await client.ipex().admit()
-
-// ------
 
 const createMasterSecret = async () => {
   secretCreationLoader.value = true;
   masterSecret.value = await Signifies.generateMasterSecret();
   secretCreationLoader.value = false;
   newSecretSnackbar.value = true;
+};
+
+const secretCopiedSnackbar = ref(false);
+const copySecretText = () => {
+  navigator.clipboard.writeText(masterSecret.value);
+  secretCopiedSnackbar.value = true;
 };
 </script>
 <style scoped>

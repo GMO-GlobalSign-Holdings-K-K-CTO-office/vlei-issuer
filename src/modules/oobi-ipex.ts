@@ -1,48 +1,14 @@
-import * as signify from "../../signify/signify-ts.mjs";
+import { SignifyClient, Serder } from "signify-ts";
 import { Contact } from "@/modules/repository";
 import { IllegalStateException } from "@/modules/exception";
 import { AID_NAME, QVI_SCHEMA_SAID } from "@/modules/const";
 
 export interface OobiIpexHandler {
-  progress(client: signify.SignifyClient, holder: Contact): Promise<void>;
-}
-
-// Note: 現状、各Handlerの最後に状態を遷移させてはいない。
-// フロントとAgentで二重管理にするのは避けたいので、Agent側の状態を確認して、逐次状態を反映させる。
-
-// OOBI Part
-export class MyChallengeSender implements OobiIpexHandler {
-  async progress(client: signify.SignifyClient, holder: Contact) {
-    console.log("ChallengeSender started.");
-
-    // チャレンジ送信専用のメソッドがclientにない。
-    // とりあえずlow-levelなexchangeを使って、チャレンジを送信するが、ここはGLEIFに問い合わせる。
-    // Challengeをビデオチャット経由で送信してもいいのか？(そうするべきなら、Challenge生成のUIを作る。)
-    const sender = await client.identifiers().get("aid");
-    const challengeSmall = await client.challenges().generate(128);
-    sessionStorage.setItem(
-      `challenge-${holder.pre}`,
-      JSON.stringify(challengeSmall),
-    );
-
-    const resp = await client
-      .exchanges()
-      .send(
-        "aid",
-        "challenge",
-        sender,
-        "/challenge",
-        { words: challengeSmall.words },
-        {},
-        [holder.pre],
-      );
-    console.log(`Challenge Sent: ${JSON.stringify(resp, null, 2)}`);
-    console.log("ChallengeSender finished.");
-  }
+  progress(client: SignifyClient, holder: Contact): Promise<void>;
 }
 
 export class YourResponseValidator implements OobiIpexHandler {
-  async progress(client: signify.SignifyClient, holder: Contact) {
+  async progress(client: SignifyClient, holder: Contact) {
     console.log("ChallengeResponseValidator started.");
 
     const challengeWord = sessionStorage.getItem(`challenge-${holder.pre}`);
@@ -63,7 +29,7 @@ export class YourResponseValidator implements OobiIpexHandler {
       exn: Record<string, unknown>;
     };
     const verifyResponse = verifyOperation.response as VerifyResponse;
-    const serder = new signify.Serder(verifyResponse.exn);
+    const serder = new Serder(verifyResponse.exn);
 
     const resp = await client.challenges().responded(holder.pre, serder.ked.d);
 
@@ -73,7 +39,7 @@ export class YourResponseValidator implements OobiIpexHandler {
 }
 
 export class MyResponseSender implements OobiIpexHandler {
-  async progress(client: signify.SignifyClient, holder: Contact) {
+  async progress(client: SignifyClient, holder: Contact) {
     console.log("ResponseSender started.");
 
     const response = await client
@@ -87,7 +53,7 @@ export class MyResponseSender implements OobiIpexHandler {
 
 // IPEX Part
 export class AcdcIssuer implements OobiIpexHandler {
-  async progress(client: signify.SignifyClient, holder: Contact) {
+  async progress(client: SignifyClient, holder: Contact) {
     console.log("AcdcIssuer started.");
 
     const issuerAid = await client.identifiers().get(AID_NAME);
@@ -130,9 +96,9 @@ export class AcdcIssuer implements OobiIpexHandler {
 
     const [grant, gsigs, gend] = await client.ipex().grant({
       senderName: issuerAid.name,
-      acdc: new signify.Serder(credential.sad),
-      anc: new signify.Serder(credential.anc),
-      iss: new signify.Serder(credential.iss),
+      acdc: new Serder(credential.sad),
+      anc: new Serder(credential.anc),
+      iss: new Serder(credential.iss),
       ancAttachment: credential.ancAttachment,
       recipient: holder.pre,
       datetime: new Date().toISOString().replace("Z", "000+00:00"),
@@ -150,7 +116,7 @@ export class AcdcIssuer implements OobiIpexHandler {
 }
 
 export class AdmitMarker implements OobiIpexHandler {
-  async progress(client: signify.SignifyClient, holder: Contact) {
+  async progress(client: SignifyClient, holder: Contact) {
     console.log("AdmitMarker started.");
 
     if (!holder.notification) {
@@ -172,5 +138,5 @@ export type OobiIpexState =
   | "3_1_challenge_received" // チャレンジ受理
   | "3_2_response_sent" // レスポンス送信済み
   | "3_3_response_validated" // 送信したレスポンスが検証済み
-  | "4_1_issuing" // 発行中
-  | "4_2_issue_accepted"; // 発行済み
+  | "4_1_issuing_credential" // 発行中
+  | "4_2_credential_accepted"; // 発行済み

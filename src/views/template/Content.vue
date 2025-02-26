@@ -8,20 +8,22 @@
         @click.stop="navDrawn = !navDrawn"
       ></v-app-bar-nav-icon>
       <v-toolbar-title class="white--text">{{ pageName }}</v-toolbar-title>
-      <v-spacer></v-spacer>
       <!-- Right Part -->
       <v-btn
         :loader="oobiLoader"
-        class="white--text"
-        color="accent"
+        class="text-white mx-3"
         variant="outlined"
-        @click="makeOobi"
-        >Make Invitation</v-btn
+        @click="getOobi"
+        >Get Invitation</v-btn
       >
-      <v-btn icon to="/profile">
-        <v-icon color="accent">mdi-account</v-icon>
-      </v-btn>
-      <span class="white--text">{{ myAid }}</span>
+      <!-- Left Paneに移行 -->
+      <!-- <v-btn
+        class="text-white"
+        variant="outlined"
+        @click="router.push('/profile')"
+        >Profile</v-btn
+      > -->
+      <span class="white--text mx-3">{{ myAid }}</span>
     </v-app-bar>
 
     <!-- Menu(Left Side) -->
@@ -46,13 +48,32 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-snackbar v-model="oobiSnackbar" color="primary" multi-line="true">
+    <v-snackbar
+      v-model="oobiSnackbar"
+      color="accent"
+      multi-line
+      timeout="10000"
+      vertical
+      variant="outlined"
+    >
       {{ oobi }}
       <template v-slot:actions>
+        <v-btn icon @click="copyOobiText">
+          <v-icon size="small">mdi-content-copy</v-icon>
+        </v-btn>
         <v-btn color="accent" variant="text" @click="oobiSnackbar = false">
           Close
         </v-btn>
       </template>
+    </v-snackbar>
+    <v-snackbar
+      v-model="oobiCopiedSnackbar"
+      location="center"
+      color="accent"
+      timeout="2000"
+      variant="tonal"
+    >
+      <div class="d-flex justify-center">Invitation Copied!</div>
     </v-snackbar>
 
     <!-- Main Area -->
@@ -70,17 +91,13 @@ const myAid: Ref<string | null> = ref(null);
 onMounted(async () => {
   const repository = await Signifies.getInstance();
   myAid.value = await repository.createOrRetrieveAid();
-  // myAid.value = (await repository.createOrRetrieveAid())
-  //   .substring(0, 30)
-  //   .concat("...");
-
-  // for debugging purpose only
-  // repository.inspect();
 });
 
 // Menu Section (Left Side)
 const menusRaw: { icon: string; text: PageName; to: PagePath }[] = [
-  { icon: "mdi-collage", text: "Holder List", to: "/holder-list" },
+  { icon: "mdi-list-box", text: "Holder List", to: "/holder-list" },
+  { icon: "mdi-account", text: "Profile", to: "/profile" },
+  { icon: "mdi-history", text: "Event History", to: "/event-history" },
 ];
 
 const menus = ref(menusRaw);
@@ -88,8 +105,6 @@ const navDrawn = ref(false);
 const closeMenu = () => {
   navDrawn.value = false;
 };
-
-// ------
 
 // Header Section
 const pageName: Ref<string | null> = ref(null);
@@ -101,7 +116,7 @@ const setPageName = (pageNameHandled: string) => {
 const oobi = ref("");
 const oobiLoader = ref(false);
 const oobiSnackbar = ref(false);
-const makeOobi = async () => {
+const getOobi = async () => {
   oobiLoader.value = true;
   const repository = await Signifies.getInstance();
   oobi.value = await repository.createOobi();
@@ -109,7 +124,13 @@ const makeOobi = async () => {
   oobiLoader.value = false;
 
   // for debugging purpose only
-  repository.inspect();
+  // repository.inspect();
+};
+
+const oobiCopiedSnackbar = ref(false);
+const copyOobiText = () => {
+  navigator.clipboard.writeText(oobi.value);
+  oobiCopiedSnackbar.value = true;
 };
 </script>
 <style scoped></style>
