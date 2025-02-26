@@ -550,14 +550,15 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     await this.client.operations().wait(resolveOp);
     await this.client.operations().delete(resolveOp.name);
 
-    const holdertoAdd: Contact = {
-      // TODO: oobiから取得できるかもしれない。確認して修正する。
-      pre: resolveResult.pre,
-      state: "1_init",
-      name: holderName,
-      challenge: ["challenge1", "challenge2"],
-    };
-    this.progressIpex(holdertoAdd);
+    // TODO: 後で消す。いらない多分
+    // const holdertoAdd: Contact = {
+    //   // TODO: oobiから取得できるかもしれない。確認して修正する。
+    //   pre: resolveResult.pre,
+    //   state: "1_init",
+    //   name: holderName,
+    //   challenge: ["challenge1", "challenge2"],
+    // };
+    // this.progressIpex(holdertoAdd);
 
     return {
       name: "John Doe",
