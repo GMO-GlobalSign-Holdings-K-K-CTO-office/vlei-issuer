@@ -1,4 +1,11 @@
-import * as signify from "../../signify/signify-ts.mjs";
+import {
+  ready,
+  randomPasscode,
+  SignifyClient,
+  Tier,
+  CreateIdentiferArgs,
+  HabState,
+} from "signify-ts";
 import {
   IllegalArgumentException,
   IllegalStateException,
@@ -8,7 +15,6 @@ import {
   YourResponseValidator,
   MyResponseSender,
   AcdcIssuer,
-  MyChallengeSender,
   OobiIpexState,
   AdmitMarker,
 } from "@/modules/oobi-ipex";
@@ -19,7 +25,7 @@ import {
   QVI_SCHEMA_URL,
   VLEI_REGISTRY_NAME,
 } from "@/modules/const";
-import { read } from "fs";
+
 /**
  * A companion class for the SignifyRepository interface,
  * providing factory methods and more.
@@ -29,6 +35,7 @@ export class Signifies {
     new Map();
 
   static {
+    // ここでreadyすると、画面リロードでエラーになる。
     // (async () => {
     //   await signify.ready();
     // })();
@@ -71,18 +78,17 @@ export class Signifies {
     if (!Signifies.instances.has(type)) {
       switch (type) {
         case "default": {
-          await signify.ready();
-          const client = new signify.SignifyClient(
+          await ready();
+          const client = new SignifyClient(
             import.meta.env.VITE_KERIA_ADMIN_INTERFACE_URL,
             masterSecret,
-            signify.Tier.low,
+            Tier.low,
             import.meta.env.VITE_KERIA_BOOT_INTERFACE_URL,
           );
 
           // Mapping of oobi state to its handler
           const ipexHandlerMap: Map<OobiIpexState, OobiIpexHandler> = new Map();
           // oobi part
-          ipexHandlerMap.set("1_init", new MyChallengeSender());
           ipexHandlerMap.set(
             "2_2_response_received",
             new YourResponseValidator(),
@@ -91,7 +97,7 @@ export class Signifies {
 
           // ipex part
           ipexHandlerMap.set("3_3_response_validated", new AcdcIssuer());
-          ipexHandlerMap.set("4_2_issue_accepted", new AdmitMarker());
+          ipexHandlerMap.set("4_2_credential_accepted", new AdmitMarker());
 
           const defaultInstance = new SignifyRepositoryDefaultImpl(
             client,
@@ -126,7 +132,7 @@ export class Signifies {
    * @returns master secret
    */
   static generateMasterSecret = async (): Promise<string> => {
-    return signify.randomPasscode();
+    return randomPasscode();
   };
 
   /**
@@ -197,9 +203,9 @@ export interface SignifyRepository {
   rotateKey(): Promise<void>;
 
   /**
-   * Get Rotation History.
+   * Get Event History.
    */
-  getRotationHistory(): Promise<RotationHistory[]>;
+  getEventHistory(): Promise<KeyEvent[]>;
 
   /**
    * Get Holders.
@@ -223,6 +229,13 @@ export interface SignifyRepository {
   addHolder(oobi: string, holderName: string): Promise<Contact>;
 
   /**
+   * Generate Challenge.
+   *
+   * @returns challenge
+   */
+  generateChallenge(): Promise<string>;
+
+  /**
    * Progress Ipex.
    *
    * @param holder
@@ -240,11 +253,11 @@ export interface SignifyRepository {
  * Holds the SignifyClient instance and implements the interface methods.
  */
 class SignifyRepositoryDefaultImpl implements SignifyRepository {
-  private client: signify.SignifyClient;
+  private client: SignifyClient;
   private ipexHandlers: Map<OobiIpexState, OobiIpexHandler> = new Map();
 
   constructor(
-    client: signify.SignifyClient,
+    client: SignifyClient,
     ipexHandlers: Map<OobiIpexState, OobiIpexHandler>,
   ) {
     this.client = client;
@@ -255,11 +268,13 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
    *  Connect to the Keria Agent.
    */
   public async connectToKeriaAgent(): Promise<void> {
+    console.log("connectToKeriaAgent started");
     const bootResp = await this.client.boot();
     console.log(`signfy client booted: ${JSON.stringify(bootResp, null, 2)}`);
 
     await this.client.connect();
     console.log("signify client connected");
+    console.log("connectToKeriaAgent finished");
   }
 
   /**
@@ -267,24 +282,26 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
    * @returns AID
    */
   public async createOrRetrieveAid(): Promise<string> {
-    let aid: signify.Identifier | null = null;
+    let aid: HabState | null = null;
 
     try {
       aid = await this.client.identifiers().get(AID_NAME);
     } catch (e) {
-      console.log(`AID not found: ${
-        JSON.stringify(e, null, 2)}`);
+      console.log(`AID not found: ${JSON.stringify(e, null, 2)}`);
     }
 
     if (!aid) {
-      // Creation of InceptionEvent (AID/KEL generation)
-      const inceptionEventArgs: signify.CreateIdentiferArgs = {
-        toad: 0,
-      };
+      // const inceptionEventArgs: CreateIdentiferArgs = {
+      //   toad: 0,
+      // };
 
-      if(import.meta.env.VITE_WITNESS_URLS){
-        inceptionEventArgs.wits = [...import.meta.env.VITE_WITNESS_URLS.split(",")];
+      const inceptionEventArgs: CreateIdentiferArgs = {};
+      const witsAids = import.meta.env.VITE_WITNESS_AIDS;
+      if (witsAids) {
+        inceptionEventArgs.wits = [...witsAids.split(",")];
         inceptionEventArgs.toad = 1;
+      } else {
+        throw new IllegalStateException("WITNESS_AIDS is not set.");
       }
 
       const inceptionEvent = await this.client
@@ -314,6 +331,7 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
       await this.client.operations().delete(authzOp.name);
 
       aid = await this.client.identifiers().get(AID_NAME);
+      console.log("createOrRetrieveAid finished");
     }
     return aid.prefix;
   }
@@ -323,8 +341,12 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
    * @returns Oobi
    */
   public async createOobi(): Promise<string> {
+    console.log("createOobi started");
+
     const oobi = await this.client.oobis().get(AID_NAME, KERIA_ROLE);
     console.log(JSON.stringify(oobi, null, 2));
+
+    console.log("createOobi finished");
     return oobi.oobis[0];
   }
 
@@ -334,6 +356,8 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
   public async importVcSchema(
     schemaUrl: string = QVI_SCHEMA_URL,
   ): Promise<void> {
+    console.log("importVcSchema started");
+
     const resolveResult = await this.client.oobis().resolve(schemaUrl);
     console.log(
       `Schema OOBI Resolution Result: ${JSON.stringify(resolveResult, null, 2)}`,
@@ -342,6 +366,8 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     const resolveOp = await resolveResult.op();
     await this.client.operations().wait(resolveOp);
     await this.client.operations().delete(resolveOp.name);
+
+    console.log("importVcSchema finished");
   }
 
   /**
@@ -352,13 +378,34 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
   public async createVcRegistry(
     registryName: string = VLEI_REGISTRY_NAME,
   ): Promise<void> {
-    const issuerAid = await this.client.identifiers().get(AID_NAME);
-    const registryCreationResult = await this.client
-      .registries()
-      .create({ name: issuerAid.name, registryName });
+    console.log("createVcRegistry started");
 
-    await this.client.operations().wait(registryCreationResult.op);
-    await this.client.operations().delete(registryCreationResult.op.name);
+    const holderAid = await this.client.identifiers().get(AID_NAME);
+    console.log(`Holder AID: ${JSON.stringify(holderAid, null, 2)}`);
+
+    // TODO: ログからRegistryの型を作る。
+    const exisitingRegList: any[] = await this.client
+      .registries()
+      .list(holderAid.name);
+    console.log(`RegList: ${JSON.stringify(exisitingRegList, null, 2)}`);
+
+    const registryFound = exisitingRegList.some((registry) => {
+      return registry.name === registryName;
+    });
+
+    if (!registryFound) {
+      const registryCreationResult = await this.client
+        .registries()
+        .create({ name: holderAid.name, registryName });
+      console.log(
+        `Registry Creation Result: ${JSON.stringify(registryCreationResult, null, 2)}`,
+      );
+
+      const registryCreationOp = await registryCreationResult.op();
+      await this.client.operations().wait(registryCreationOp);
+      await this.client.operations().delete(registryCreationOp.name);
+    }
+    console.log("createVcRegistry finished");
   }
 
   /**
@@ -382,43 +429,32 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
    * Rotate the key.
    */
   public async rotateKey(): Promise<void> {
+    console.log("rotateKey started");
+
     const rotateEvent = await this.client.identifiers().rotate(AID_NAME);
-    console.log(JSON.stringify(rotateEvent, null, 2));
+    console.log(`Rotate Event: ${JSON.stringify(rotateEvent, null, 2)}`);
 
     const rotateOp = await rotateEvent.op();
     await this.client.operations().wait(rotateOp);
     await this.client.operations().delete(rotateOp.name);
+
+    console.log("rotateKey finished");
   }
 
   /**
-   * TODO: Get Rotation History.
+   * Get Event History.
    */
-  public async getRotationHistory(): Promise<RotationHistory[]> {
-    const agent = this.client.agent;
-    if (agent) {
-      const kel = await this.client.keyEvents().get(agent.pre);
-      // TODO: ここを確認して、RotationHistoryの型を定義して変換してreturnする。
-      // TODO: Check here and define the RotationHistory type and convert it to return.
-      console.log(`KEL: ${JSON.stringify(kel, null, 2)}`);
+  public async getEventHistory(): Promise<KeyEvent[]> {
+    console.log("getEventHistory started");
 
-      // Return mockup data for now.
-      return [
-        {
-          publicKey: "publicKey1",
-          createdDate: "2024/01/01",
-        },
-        {
-          publicKey: "publicKey2",
-          createdDate: "2024/01/02",
-        },
-        {
-          publicKey: "publicKey3",
-          createdDate: "2024/01/03",
-        },
-      ];
-    } else {
-      throw new IllegalStateException("Agent is not set.");
-    }
+    const aid = await this.client.identifiers().get(AID_NAME);
+    const kel: KeyEvent[] = (await this.client
+      .keyEvents()
+      .get(aid.prefix)) as KeyEvent[];
+    console.log(`KEL: ${JSON.stringify(kel, null, 2)}`);
+
+    console.log("getEventHistory finished");
+    return kel;
   }
 
   /**
@@ -428,7 +464,7 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     // TODO: Anyで帰ってきてしまっている。ログから型を特定する。
     // とりあえず仮定の型でモックデータを返す。
 
-    const holders = (await this.client.contacts().list()) as Contact[];
+    const holders = await this.client.contacts().list();
     console.log(`Holders: ${JSON.stringify(holders, null, 2)}`);
 
     // TODO: Important!! ここでStatusの設定を行う。(1)
@@ -480,8 +516,8 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
       throw new IllegalStateException("pre is not set.");
     }
 
-    const holder = (await this.client.contacts().get(pre)) as Contact;
-    console.log(`Holder: ${JSON.stringify(holder, null, 2)}`);
+    // const holder = await this.client.contacts().get(pre);
+    // console.log(`Holder: ${JSON.stringify(holder, null, 2)}`);
 
     // TODO: Important!! getHolders(..)同様に、ここでStatusの設定を行う。
 
@@ -545,6 +581,18 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
   }
 
   /**
+   * Generate Challenge.
+   *
+   * @returns challenge
+   */
+  public async generateChallenge(): Promise<string> {
+    const challenge = await this.client.challenges().generate(128);
+    console.log(`Challenge: ${JSON.stringify(challenge, null, 2)}`);
+    // TODO: 仮の実装。実際のSDK戻り値を確認して修正する。
+    return challenge.words.toString();
+  }
+
+  /**
    * Logging useful information of the Signify Client.
    * 有益そうなSignify Clientの情報をロギングする。
    * This method is for development only.
@@ -582,6 +630,25 @@ export type RotationHistory = {
   publicKey: string;
   createdDate: string;
 };
+
+export type KeyEvent = {
+  ked: {
+    // Public Key List
+    k: string[];
+    // Sequence
+    s: string;
+    // Key Event Type
+    t: KeyEventType;
+  };
+};
+
+export type KeyEventType =
+  // inception
+  | "icp"
+  // interaction
+  | "ixn"
+  // rotation
+  | "rot";
 
 // TODO: 仮の型定義。実際のSDK戻り値を確認して修正する。
 export type Contact = {
