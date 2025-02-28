@@ -5,7 +5,7 @@ import router from "./router";
 import "@mdi/font/css/materialdesignicons.css";
 import { registerPlugins } from "./plugins";
 
-// Vite is not polyfilling Buffer, so we need to do it ourselves
+// polyfill
 import { Buffer } from "buffer";
 window.Buffer = Buffer;
 

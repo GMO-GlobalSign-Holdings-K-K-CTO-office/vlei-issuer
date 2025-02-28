@@ -18,7 +18,7 @@
           label="Master Secret"
           prepend-icon="mdi-lock"
           :append-icon="secretHidden ? 'mdi-eye-off' : 'mdi-eye'"
-          @click:append="(secretHidden = !secretHidden)"
+          @click:append="secretHidden = !secretHidden"
           color="accent"
           :rules="secretRules"
         ></v-text-field>
@@ -34,7 +34,6 @@
           >
           <v-btn
             class="my-3"
-            variant="outlined"
             color="accent"
             @click="createMasterSecret"
             :loading="secretCreationLoader"
@@ -56,7 +55,7 @@
       <v-btn icon @click="copySecretText">
         <v-icon size="small">mdi-content-copy</v-icon>
       </v-btn>
-      <v-btn color="accent" variant="text" @click="(newSecretSnackbar = false)">
+      <v-btn color="accent" variant="text" @click="newSecretSnackbar = false">
         Close
       </v-btn>
     </template>

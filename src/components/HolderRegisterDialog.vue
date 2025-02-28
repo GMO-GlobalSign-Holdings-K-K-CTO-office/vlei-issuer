@@ -3,7 +3,7 @@
     v-model="uiState.dialog"
     persistent
     transition="dialog-bottom-transition"
-    width="60vw"
+    width="55vw"
   >
     <template v-slot:activator="{ props }">
       <div class="float-button-wrapper">
@@ -21,13 +21,17 @@
     <v-card>
       <v-toolbar color="accent" clipped-right>
         <v-app-bar-title class="white--text">Register Holder</v-app-bar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon @click="closeDialog">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
       </v-toolbar>
 
       <v-container>
         <v-row>
           <v-card class="mx-auto my-10" variant="flat" style="width: 50vw">
             <v-card-subtitle class="mt-3"
-              >Please input a holder's OOBI</v-card-subtitle
+              >Please Input OOBI URL</v-card-subtitle
             >
             <v-spacer></v-spacer>
             <v-form ref="holderRegisterForm" class="px-4 py-2">
@@ -88,6 +92,10 @@ const uiState: {
   leiRule: [(v: string) => !!v || "LEI is required."],
   oobiRule: [(v: string) => !!v || "OOBI is required."],
 });
+
+const closeDialog = () => {
+  uiState.dialog = false;
+};
 
 const emit = defineEmits<{
   (e: "holderRegistered"): void;

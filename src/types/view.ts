@@ -1,5 +1,14 @@
-export type PageName = "Profile" | "Holder List" | "Holder Detail";
-export type PagePath = "/" | "/profile" | "/holder-list" | "/holder-detail";
+export type PageName =
+  | "Profile"
+  | "Holder List"
+  | "Holder Detail"
+  | "Event History";
+export type PagePath =
+  | "/"
+  | "/profile"
+  | "/holder-list"
+  | "/holder-detail"
+  | "/event-history";
 
 export type ValidationRule = (v: string) => boolean | ErrorMessage;
 

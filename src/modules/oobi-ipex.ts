@@ -9,8 +9,6 @@ export interface OobiIpexHandler {
 
 export class YourResponseValidator implements OobiIpexHandler {
   async progress(client: SignifyClient, holder: Contact) {
-    console.log("ChallengeResponseValidator started.");
-
     const challengeWord = sessionStorage.getItem(`challenge-${holder.pre}`);
     if (!challengeWord) {
       throw new Error("Challenge not found.");
@@ -40,8 +38,6 @@ export class YourResponseValidator implements OobiIpexHandler {
 
 export class MyResponseSender implements OobiIpexHandler {
   async progress(client: SignifyClient, holder: Contact) {
-    console.log("ResponseSender started.");
-
     const response = await client
       .challenges()
       .respond("aid", holder.pre, holder.challenge);
@@ -54,8 +50,6 @@ export class MyResponseSender implements OobiIpexHandler {
 // IPEX Part
 export class AcdcIssuer implements OobiIpexHandler {
   async progress(client: SignifyClient, holder: Contact) {
-    console.log("AcdcIssuer started.");
-
     const issuerAid = await client.identifiers().get(AID_NAME);
     const registries = await client.registries().list(issuerAid.name);
 
@@ -117,8 +111,6 @@ export class AcdcIssuer implements OobiIpexHandler {
 
 export class AdmitMarker implements OobiIpexHandler {
   async progress(client: SignifyClient, holder: Contact) {
-    console.log("AdmitMarker started.");
-
     if (!holder.notification) {
       throw new IllegalStateException("Notification not found.");
     }

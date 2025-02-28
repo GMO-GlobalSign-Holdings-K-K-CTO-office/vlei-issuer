@@ -17,7 +17,7 @@ const router = createRouter({
       component: Content,
       meta: { requiresInit: true },
       redirect: () => {
-        return { name: "Init" };
+        return { name: "HolderList" };
       },
       children: [
         {
@@ -56,7 +56,7 @@ const router = createRouter({
           // Move to the next page if the initiation is done.
           // Note: Assume that there is no multiple master secrets(aid).
           next({
-            path: "/session-list",
+            path: "/holder-list",
           });
         } else {
           next();

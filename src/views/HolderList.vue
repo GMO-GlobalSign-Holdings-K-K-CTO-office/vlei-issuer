@@ -1,11 +1,15 @@
 <template>
   <template v-if="renderReady">
     <v-list>
-      <v-list-item v-for="(holder, i) in holders" :key="`list-${i}`">
-        <v-list-item-title class="font-weight-bold">
+      <v-list-item
+        class="my-2"
+        v-for="(holder, i) in holders"
+        :key="`list-${i}`"
+      >
+        <v-list-item-title>
           {{ holder.name }}
         </v-list-item-title>
-        <span>{{ holder.pre }}</span>
+        <v-list-item-subtitle>TBD</v-list-item-subtitle>
         <template v-slot:append>
           <v-list-item-action>
             <v-btn
@@ -15,7 +19,7 @@
               >Detail</v-btn
             >
           </v-list-item-action>
-          <v-list-item-action>
+          <v-list-item-action class="ml-3">
             <v-btn
               variant="outlined"
               color="accent"
@@ -63,7 +67,7 @@
             </v-dialog>
           </v-list-item-action> -->
         </template>
-        <v-divider></v-divider>
+        <v-divider class="mt-2"></v-divider>
       </v-list-item>
     </v-list>
     <holder-register-dialog @holderRegistered="holderRegistered" />
@@ -122,7 +126,7 @@ const showHolders = async () => {
   holders.value = await repository.getHolders();
 
   // for debugging purpose only
-  repository.inspect();
+  // repository.inspect();
 };
 
 const router = useRouter();
@@ -143,7 +147,7 @@ const progressIpex = async (holder: Contact) => {
   noticeAfterIpex.value = true;
 
   // for debugging purpose only
-  repository.inspect();
+  // repository.inspect();
 };
 
 const noticeAfterHolderRegistered = ref(false);
@@ -161,8 +165,8 @@ oobiIpexButtonTextMap.set("2_3_response_validated", "Response Validated");
 oobiIpexButtonTextMap.set("3_1_challenge_received", "Send Response"); // active
 oobiIpexButtonTextMap.set("3_2_response_sent", "Response Sent");
 oobiIpexButtonTextMap.set("3_3_response_validated", "Issue Credential"); // active
-oobiIpexButtonTextMap.set("4_1_issuing", "Issueing Credential");
-oobiIpexButtonTextMap.set("4_2_issue_accepted", "Issued Credential");
+oobiIpexButtonTextMap.set("4_1_issuing_credential", "Issueing Credential");
+oobiIpexButtonTextMap.set("4_2_credential_accepted", "Issued Credential");
 
 /**
  *  Check if the Ipex State can proceed.

@@ -25,6 +25,7 @@ import {
   QVI_SCHEMA_URL,
   VLEI_REGISTRY_NAME,
 } from "@/modules/const";
+import { LogAllMethods } from "./decorator";
 
 /**
  * A companion class for the SignifyRepository interface,
@@ -252,6 +253,7 @@ export interface SignifyRepository {
  * The default implementation of the SignifyRepository interface.
  * Holds the SignifyClient instance and implements the interface methods.
  */
+@LogAllMethods
 class SignifyRepositoryDefaultImpl implements SignifyRepository {
   private client: SignifyClient;
   private ipexHandlers: Map<OobiIpexState, OobiIpexHandler> = new Map();
@@ -268,13 +270,11 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
    *  Connect to the Keria Agent.
    */
   public async connectToKeriaAgent(): Promise<void> {
-    console.log("connectToKeriaAgent started");
     const bootResp = await this.client.boot();
     console.log(`signfy client booted: ${JSON.stringify(bootResp, null, 2)}`);
 
     await this.client.connect();
     console.log("signify client connected");
-    console.log("connectToKeriaAgent finished");
   }
 
   /**
@@ -291,18 +291,18 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     }
 
     if (!aid) {
-      // const inceptionEventArgs: CreateIdentiferArgs = {
-      //   toad: 0,
-      // };
+      const inceptionEventArgs: CreateIdentiferArgs = {
+        toad: 0,
+      };
 
-      const inceptionEventArgs: CreateIdentiferArgs = {};
-      const witsAids = import.meta.env.VITE_WITNESS_AIDS;
-      if (witsAids) {
-        inceptionEventArgs.wits = [...witsAids.split(",")];
-        inceptionEventArgs.toad = 1;
-      } else {
-        throw new IllegalStateException("WITNESS_AIDS is not set.");
-      }
+      // const inceptionEventArgs: CreateIdentiferArgs = {};
+      // const witsAids = import.meta.env.VITE_WITNESS_AIDS;
+      // if (witsAids) {
+      //   inceptionEventArgs.wits = [...witsAids.split(",")];
+      //   inceptionEventArgs.toad = 1;
+      // } else {
+      //   throw new IllegalStateException("WITNESS_AIDS is not set.");
+      // }
 
       const inceptionEvent = await this.client
         .identifiers()
@@ -341,12 +341,9 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
    * @returns Oobi
    */
   public async createOobi(): Promise<string> {
-    console.log("createOobi started");
-
     const oobi = await this.client.oobis().get(AID_NAME, KERIA_ROLE);
     console.log(JSON.stringify(oobi, null, 2));
 
-    console.log("createOobi finished");
     return oobi.oobis[0];
   }
 
@@ -356,16 +353,14 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
   public async importVcSchema(
     schemaUrl: string = QVI_SCHEMA_URL,
   ): Promise<void> {
-    console.log("importVcSchema started");
-
     const resolveResult = await this.client.oobis().resolve(schemaUrl);
     console.log(
       `Schema OOBI Resolution Result: ${JSON.stringify(resolveResult, null, 2)}`,
     );
 
-    const resolveOp = await resolveResult.op();
-    await this.client.operations().wait(resolveOp);
-    await this.client.operations().delete(resolveOp.name);
+    // const resolveOp = await resolveResult.op();
+    // await this.client.operations().wait(resolveOp);
+    // await this.client.operations().delete(resolveOp.name);
 
     console.log("importVcSchema finished");
   }
@@ -378,8 +373,6 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
   public async createVcRegistry(
     registryName: string = VLEI_REGISTRY_NAME,
   ): Promise<void> {
-    console.log("createVcRegistry started");
-
     const holderAid = await this.client.identifiers().get(AID_NAME);
     console.log(`Holder AID: ${JSON.stringify(holderAid, null, 2)}`);
 
@@ -429,8 +422,6 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
    * Rotate the key.
    */
   public async rotateKey(): Promise<void> {
-    console.log("rotateKey started");
-
     const rotateEvent = await this.client.identifiers().rotate(AID_NAME);
     console.log(`Rotate Event: ${JSON.stringify(rotateEvent, null, 2)}`);
 
@@ -445,8 +436,6 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
    * Get Event History.
    */
   public async getEventHistory(): Promise<KeyEvent[]> {
-    console.log("getEventHistory started");
-
     const aid = await this.client.identifiers().get(AID_NAME);
     const kel: KeyEvent[] = (await this.client
       .keyEvents()
