@@ -151,7 +151,7 @@ const emit = defineEmits<{
 
 onMounted(async () => {
   await showDetail();
-  emit("pageName", "Session Detail");
+  emit("pageName", "Holder Detail");
   renderReady.value = true;
 });
 </script>

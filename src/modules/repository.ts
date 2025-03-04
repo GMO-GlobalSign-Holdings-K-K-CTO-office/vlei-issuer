@@ -331,8 +331,9 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
       await this.client.operations().delete(authzOp.name);
 
       aid = await this.client.identifiers().get(AID_NAME);
-      console.log("createOrRetrieveAid finished");
     }
+
+    console.log(`AID: ${JSON.stringify(aid, null, 2)}`);
     return aid.prefix;
   }
 
@@ -358,11 +359,9 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
       `Schema OOBI Resolution Result: ${JSON.stringify(resolveResult, null, 2)}`,
     );
 
-    // const resolveOp = await resolveResult.op();
+    //const resolveOp = await resolveResult.op();
     // await this.client.operations().wait(resolveOp);
     // await this.client.operations().delete(resolveOp.name);
-
-    console.log("importVcSchema finished");
   }
 
   /**
@@ -398,7 +397,6 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
       await this.client.operations().wait(registryCreationOp);
       await this.client.operations().delete(registryCreationOp.name);
     }
-    console.log("createVcRegistry finished");
   }
 
   /**
@@ -428,8 +426,6 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     const rotateOp = await rotateEvent.op();
     await this.client.operations().wait(rotateOp);
     await this.client.operations().delete(rotateOp.name);
-
-    console.log("rotateKey finished");
   }
 
   /**
@@ -442,7 +438,6 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
       .get(aid.prefix)) as KeyEvent[];
     console.log(`KEL: ${JSON.stringify(kel, null, 2)}`);
 
-    console.log("getEventHistory finished");
     return kel;
   }
 
@@ -535,7 +530,8 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
       `Oobi Resolution Result: ${JSON.stringify(resolveResult, null, 2)}`,
     );
 
-    const resolveOp = await resolveResult.op();
+    const resolveOp = await this.client.operations().get(resolveResult.name);
+    console.log(`Resolve Operation: ${JSON.stringify(resolveOp, null, 2)}`);
     await this.client.operations().wait(resolveOp);
     await this.client.operations().delete(resolveOp.name);
 

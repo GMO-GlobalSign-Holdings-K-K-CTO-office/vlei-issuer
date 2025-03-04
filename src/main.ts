@@ -18,4 +18,4 @@ app.config.errorHandler = (err) => {
 };
 app.mount("#app");
 
-window.document.title = "ACDC Holder";
+window.document.title = "ACDC Issuer";

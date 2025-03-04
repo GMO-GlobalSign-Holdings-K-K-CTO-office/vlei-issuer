@@ -2,11 +2,13 @@ import { SignifyClient, Serder } from "signify-ts";
 import { Contact } from "@/modules/repository";
 import { IllegalStateException } from "@/modules/exception";
 import { AID_NAME, QVI_SCHEMA_SAID } from "@/modules/const";
+import { LogAllMethods } from "./decorator";
 
 export interface OobiIpexHandler {
   progress(client: SignifyClient, holder: Contact): Promise<void>;
 }
 
+@LogAllMethods
 export class YourResponseValidator implements OobiIpexHandler {
   async progress(client: SignifyClient, holder: Contact) {
     const challengeWord = sessionStorage.getItem(`challenge-${holder.pre}`);
@@ -32,22 +34,21 @@ export class YourResponseValidator implements OobiIpexHandler {
     const resp = await client.challenges().responded(holder.pre, serder.ked.d);
 
     console.log(`Responsed Resp: ${JSON.stringify(resp, null, 2)}`);
-    console.log("ChallengeResponseValidator finished.");
   }
 }
 
+@LogAllMethods
 export class MyResponseSender implements OobiIpexHandler {
   async progress(client: SignifyClient, holder: Contact) {
     const response = await client
       .challenges()
       .respond("aid", holder.pre, holder.challenge);
     console.log(`Response Sent: ${JSON.stringify(response, null, 2)}`);
-
-    console.log("ResponseSender finished.");
   }
 }
 
 // IPEX Part
+@LogAllMethods
 export class AcdcIssuer implements OobiIpexHandler {
   async progress(client: SignifyClient, holder: Contact) {
     const issuerAid = await client.identifiers().get(AID_NAME);
@@ -104,11 +105,10 @@ export class AcdcIssuer implements OobiIpexHandler {
 
     client.operations().wait(grantOp);
     client.operations().delete(grantOp.name);
-
-    console.log("AcdcIssuer finished.");
   }
 }
 
+@LogAllMethods
 export class AdmitMarker implements OobiIpexHandler {
   async progress(client: SignifyClient, holder: Contact) {
     if (!holder.notification) {
@@ -117,8 +117,6 @@ export class AdmitMarker implements OobiIpexHandler {
 
     await client.notifications().mark(holder.notification.i);
     await client.notifications().delete(holder.notification.i);
-
-    console.log("AdmitResponder finished.");
   }
 }
 
