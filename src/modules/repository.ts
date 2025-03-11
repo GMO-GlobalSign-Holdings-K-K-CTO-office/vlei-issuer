@@ -24,6 +24,7 @@ import {
   KERIA_ROLE,
   QVI_SCHEMA_URL,
   VLEI_REGISTRY_NAME,
+  QVI_SCHEMA_SAID,
 } from "@/modules/const";
 import { LogAllMethods } from "./decorator";
 
@@ -242,6 +243,18 @@ export interface SignifyRepository {
    * @param holder
    */
   progressIpex(holder: Contact): Promise<void>;
+
+  /**
+   * Revoke Credential.
+   */
+  revokeCredential(credentialId: string): Promise<void>;
+
+  /**
+   * Get Issued Credential Id.
+   *
+   * @param holderAid
+   */
+  getIssuedCredentialId(holderAid: string): Promise<string | null>;
 
   /**
    * This method is for development only.
@@ -576,6 +589,46 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     console.log(`Challenge: ${JSON.stringify(challenge, null, 2)}`);
     // TODO: 仮の実装。実際のSDK戻り値を確認して修正する。
     return challenge.words.toString();
+  }
+
+  /**
+   * Revoke Credential.
+   */
+  public async revokeCredential(credentialId: string): Promise<void> {
+    const revocationResult = await this.client
+      .credentials()
+      .revoke(AID_NAME, credentialId);
+    console.log(`Revocation Result:`, revocationResult);
+
+    const revocationOp = revocationResult.op;
+    await this.client.operations().wait(revocationOp);
+    await this.client.operations().delete(revocationOp.name);
+  }
+
+  /**
+   * Get Issued Credential Id.
+   *
+   * @param holderAid
+   */
+  public async getIssuedCredentialId(
+    holderAid: string,
+  ): Promise<string | null> {
+    const myAid = this.createOrRetrieveAid();
+    const credentials = (await this.client.credentials().list({
+      filter: {
+        "-i": myAid,
+        "-s": QVI_SCHEMA_SAID,
+        "-a-i": holderAid,
+      },
+    })) as any[];
+    console.log(`Issued Credentials for Holder {}`, credentials);
+
+    if (!credentials || credentials.length === 0) {
+      return null;
+    } else {
+      // Holderに対し発行VC数は、1つの前提
+      return credentials[0].id;
+    }
   }
 
   /**

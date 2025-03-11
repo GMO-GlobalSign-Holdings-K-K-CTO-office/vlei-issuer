@@ -20,6 +20,23 @@
         </v-table>
       </v-row>
 
+      <!-- Credential Revocation Part -->
+      <template v-if="issuedCredentialFound">
+        <credential-revocation-dialog
+          @credentialRevoked="credentialRevoked"
+          :credentialId="issuedCredentialId"
+        />
+        <v-snackbar
+          v-model="credentialRevokedSnackbar"
+          close-on-content-click
+          color="accent"
+          timeout="2000"
+          variant="tonal"
+        >
+          <div class="d-flex justify-center">Credential Revoked</div>
+        </v-snackbar>
+      </template>
+
       <!-- Challenge Acceptance Part -->
       <challenge-acceptance-dialog
         :contactName="contact?.name ?? 'unknown'"
@@ -28,22 +45,12 @@
       />
       <v-snackbar
         v-model="challengeAcceptedSnackbar"
+        close-on-content-click
         color="accent"
-        multi-line
         timeout="2000"
-        vertical
-        variant="outlined"
+        variant="tonal"
       >
-        Challenge Accepted!
-        <template v-slot:actions>
-          <v-btn
-            color="accent"
-            variant="text"
-            @click="challengeAcceptedSnackbar = false"
-          >
-            Close
-          </v-btn>
-        </template>
+        <div class="d-flex justify-center">Challenge Accepted</div>
       </v-snackbar>
 
       <!-- Challenge Generation Part -->
@@ -102,23 +109,47 @@
 import { onMounted, ref, type Ref } from "vue";
 import { useRoute } from "vue-router";
 import { Signifies, type Contact } from "@/modules/repository";
+import ChallengeAcceptanceDialog from "@/components/ChallengeAcceptanceDialog.vue";
+import CredentialRevocationDialog from "@/components/CredentialRevocationDialog.vue";
+import { IllegalArgumentException } from "@/modules/exception";
 
+const route = useRoute();
 const renderReady = ref(false);
 const contact: Ref<Contact | null> = ref(null);
 
-const route = useRoute();
+const issuedCredentialFound = ref(false);
+const issuedCredentialId = ref("");
+
 const showDetail = async () => {
   const repository = await Signifies.getInstance();
   const prefix = route.params.pre;
   if (Array.isArray(prefix)) {
-    throw new Error("Invalid pre");
+    throw new IllegalArgumentException("Invalid pre");
   } else {
     contact.value = await repository.getHolder(prefix);
     console.log(`Contact: ${JSON.stringify(contact.value, null, 2)}`);
+
+    const credentialId = await repository.getIssuedCredentialId(
+      contact.value.pre,
+    );
+
+    if (credentialId) {
+      issuedCredentialFound.value = true;
+      issuedCredentialId.value = credentialId;
+    }
   }
 
   // for debugging purpose only
   // await repository.inspect();
+};
+
+// Credential Revocation Part
+const credentialRevokedSnackbar = ref(false);
+const credentialRevoked = async () => {
+  renderReady.value = false;
+  await showDetail();
+  renderReady.value = true;
+  credentialRevokedSnackbar.value = true;
 };
 
 // Challenge Acceptance Part
@@ -127,6 +158,7 @@ const challengeAccepted = async () => {
   renderReady.value = false;
   await showDetail();
   renderReady.value = true;
+  challengeAcceptedSnackbar.value = true;
 };
 
 // Challenge Generation Part
