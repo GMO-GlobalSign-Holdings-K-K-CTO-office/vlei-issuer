@@ -39,8 +39,7 @@
 
       <!-- Challenge Acceptance Part -->
       <challenge-acceptance-dialog
-        :contactName="contact?.name ?? 'unknown'"
-        :contactPrefix="contact?.pre ?? 'unknown'"
+        :contact="contact"
         @challengeAccepted="challengeAccepted"
       />
       <v-snackbar
@@ -108,14 +107,14 @@
 <script setup lang="ts">
 import { onMounted, ref, type Ref } from "vue";
 import { useRoute } from "vue-router";
-import { Signifies, type Contact } from "@/modules/repository";
+import { Signifies, type ExtendedContact } from "@/modules/repository";
 import ChallengeAcceptanceDialog from "@/components/ChallengeAcceptanceDialog.vue";
 import CredentialRevocationDialog from "@/components/CredentialRevocationDialog.vue";
 import { IllegalArgumentException } from "@/modules/exception";
 
 const route = useRoute();
 const renderReady = ref(false);
-const contact: Ref<Contact | null> = ref(null);
+const contact: Ref<ExtendedContact | null> = ref(null);
 
 const issuedCredentialFound = ref(false);
 const issuedCredentialId = ref("");
@@ -130,7 +129,7 @@ const showDetail = async () => {
     console.log(`Contact: ${JSON.stringify(contact.value, null, 2)}`);
 
     const credentialId = await repository.getIssuedCredentialId(
-      contact.value.pre,
+      contact.value.id,
     );
 
     if (credentialId) {

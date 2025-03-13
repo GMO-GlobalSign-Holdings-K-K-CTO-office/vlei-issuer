@@ -1,16 +1,16 @@
 import { SignifyClient, Serder } from "signify-ts";
-import { Contact } from "@/modules/repository";
+import { Signifies, type ExtendedContact } from "@/modules/repository";
 import { IllegalStateException } from "@/modules/exception";
 import { AID_NAME, QVI_SCHEMA_SAID } from "@/modules/const";
 import { LogAllMethods } from "./decorator";
 
 export interface OobiIpexHandler {
-  progress(client: SignifyClient, holder: Contact): Promise<void>;
+  progress(client: SignifyClient, holder: ExtendedContact): Promise<void>;
 }
 
 @LogAllMethods
 export class YourResponseValidator implements OobiIpexHandler {
-  async progress(client: SignifyClient, holder: Contact) {
+  async progress(client: SignifyClient, holder: ExtendedContact) {
     const challengeWord = sessionStorage.getItem(`challenge-${holder.pre}`);
     if (!challengeWord) {
       throw new Error("Challenge not found.");
@@ -18,7 +18,7 @@ export class YourResponseValidator implements OobiIpexHandler {
 
     const verifyOperation = await client
       .challenges()
-      .verify(holder.pre, JSON.parse(challengeWord).words);
+      .verify(holder.id, JSON.parse(challengeWord).words);
     console.log(`VerifyOperation: ${JSON.stringify(verifyOperation, null, 2)}`);
 
     await client.operations().wait(verifyOperation);
@@ -31,7 +31,7 @@ export class YourResponseValidator implements OobiIpexHandler {
     const verifyResponse = verifyOperation.response as VerifyResponse;
     const serder = new Serder(verifyResponse.exn);
 
-    const resp = await client.challenges().responded(holder.pre, serder.ked.d);
+    const resp = await client.challenges().responded(holder.id, serder.ked.d);
 
     console.log(`Responsed Resp: ${JSON.stringify(resp, null, 2)}`);
   }
@@ -39,18 +39,25 @@ export class YourResponseValidator implements OobiIpexHandler {
 
 @LogAllMethods
 export class MyResponseSender implements OobiIpexHandler {
-  async progress(client: SignifyClient, holder: Contact) {
+  async progress(client: SignifyClient, holder: ExtendedContact) {
+    if (!holder.challenges) {
+      throw new IllegalStateException("Challenges are not set.");
+    }
+
     const response = await client
       .challenges()
-      .respond("aid", holder.pre, holder.challenge);
+      .respond("aid", holder.id, holder.challenges);
     console.log(`Response Sent: ${JSON.stringify(response, null, 2)}`);
+
+    const repository = await Signifies.getInstance();
+    await repository.setIpexState("3_2_response_sent", holder.id);
   }
 }
 
 // IPEX Part
 @LogAllMethods
 export class AcdcIssuer implements OobiIpexHandler {
-  async progress(client: SignifyClient, holder: Contact) {
+  async progress(client: SignifyClient, holder: ExtendedContact) {
     const issuerAid = await client.identifiers().get(AID_NAME);
     const registries = await client.registries().list(issuerAid.name);
 
@@ -73,7 +80,7 @@ export class AcdcIssuer implements OobiIpexHandler {
       ri: registry.regk,
       s: QVI_SCHEMA_SAID,
       a: {
-        i: holder.pre,
+        i: holder.id,
         ...vcdata,
       },
     });
@@ -95,13 +102,13 @@ export class AcdcIssuer implements OobiIpexHandler {
       anc: new Serder(credential.anc),
       iss: new Serder(credential.iss),
       ancAttachment: credential.ancAttachment,
-      recipient: holder.pre,
+      recipient: holder.id,
       datetime: new Date().toISOString().replace("Z", "000+00:00"),
     });
 
     const grantOp = await client
       .ipex()
-      .submitGrant(issuerAid.name, grant, gsigs, gend, [holder.pre]);
+      .submitGrant(issuerAid.name, grant, gsigs, gend, [holder.id]);
 
     client.operations().wait(grantOp);
     client.operations().delete(grantOp.name);
@@ -110,7 +117,7 @@ export class AcdcIssuer implements OobiIpexHandler {
 
 @LogAllMethods
 export class AdmitMarker implements OobiIpexHandler {
-  async progress(client: SignifyClient, holder: Contact) {
+  async progress(client: SignifyClient, holder: ExtendedContact) {
     if (!holder.notification) {
       throw new IllegalStateException("Notification not found.");
     }
@@ -129,4 +136,5 @@ export type OobiIpexState =
   | "3_2_response_sent" // レスポンス送信済み
   | "3_3_response_validated" // 送信したレスポンスが検証済み
   | "4_1_issuing_credential" // 発行中
-  | "4_2_credential_accepted"; // 発行済み
+  | "4_2_credential_issued" // 発行済み
+  | "5_1_credential_revoked"; // 通知受理

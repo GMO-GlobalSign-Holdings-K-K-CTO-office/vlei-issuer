@@ -15,7 +15,7 @@
             <v-btn
               variant="outlined"
               color="secondary"
-              @click="navigateToHolderDetail(holder.pre)"
+              @click="navigateToHolderDetail(holder.id)"
               >Detail</v-btn
             >
           </v-list-item-action>
@@ -102,14 +102,14 @@
   </template>
 </template>
 <script setup lang="ts">
-import { Signifies, type Contact } from "@/modules/repository";
+import { Signifies, type ExtendedContact } from "@/modules/repository";
 import { ref, onMounted, type Ref } from "vue";
 import { useRouter } from "vue-router";
 import HolderRegisterDialog from "@/components/HolderRegisterDialog.vue";
 import { OobiIpexState } from "@/modules/oobi-ipex";
 
 const renderReady = ref(false);
-const holders: Ref<Contact[]> = ref([]);
+const holders: Ref<ExtendedContact[]> = ref([]);
 
 const emit = defineEmits<{
   (e: "pageName", pageName: string): void;
@@ -137,7 +137,7 @@ const navigateToHolderDetail = async (pre: string) => {
 const noticeAfterIpex = ref(false);
 const ipexProgressing = ref(false);
 const MESSAGE_ON_IPEX_PROGRESS = "Done processing.";
-const progressIpex = async (holder: Contact) => {
+const progressIpex = async (holder: ExtendedContact) => {
   ipexProgressing.value = true;
   const repository = await Signifies.getInstance();
   await repository.progressIpex(holder);
@@ -166,7 +166,7 @@ oobiIpexButtonTextMap.set("3_1_challenge_received", "Send Response"); // active
 oobiIpexButtonTextMap.set("3_2_response_sent", "Response Sent");
 oobiIpexButtonTextMap.set("3_3_response_validated", "Issue Credential"); // active
 oobiIpexButtonTextMap.set("4_1_issuing_credential", "Issueing Credential");
-oobiIpexButtonTextMap.set("4_2_credential_accepted", "Issued Credential");
+oobiIpexButtonTextMap.set("4_2_credential_issued", "Credential Issued");
 
 /**
  *  Check if the Ipex State can proceed.
