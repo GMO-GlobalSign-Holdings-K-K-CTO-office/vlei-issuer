@@ -8,10 +8,18 @@ export interface OobiIpexHandler {
   progress(client: SignifyClient, holder: ExtendedContact): Promise<void>;
 }
 
+export class MyChallengeSentCallback implements OobiIpexHandler {
+  async progress(client: SignifyClient, holder: ExtendedContact) {
+    const repository = await Signifies.getInstance();
+    await repository.setIpexState("2_1_challenge_sent", holder.id);
+  }
+}
+
 @LogAllMethods
 export class YourResponseValidator implements OobiIpexHandler {
   async progress(client: SignifyClient, holder: ExtendedContact) {
-    const challengeWord = sessionStorage.getItem(`challenge-${holder.pre}`);
+    // TODO: Signifiesに移行する
+    const challengeWord = sessionStorage.getItem(`challenge-${holder.id}`);
     if (!challengeWord) {
       throw new Error("Challenge not found.");
     }

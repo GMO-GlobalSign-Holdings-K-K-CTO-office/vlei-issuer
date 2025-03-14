@@ -179,9 +179,10 @@ const holderRegistered = async () => {
 };
 
 const oobiIpexButtonTextMap: Map<OobiIpexState, string> = new Map();
-oobiIpexButtonTextMap.set("2_2_response_received", "Validate Response"); // active
-oobiIpexButtonTextMap.set("3_1_challenge_received", "Send Response"); // active
-oobiIpexButtonTextMap.set("3_3_response_validated", "Issue Credential"); // active
+oobiIpexButtonTextMap.set("1_init", "Challenge Sent?");
+oobiIpexButtonTextMap.set("2_1_challenge_sent", "Validate Response");
+oobiIpexButtonTextMap.set("3_1_challenge_received", "Send Response");
+oobiIpexButtonTextMap.set("3_3_response_validated", "Issue Credential");
 
 /**
  *  Check if the Ipex State can proceed.
@@ -191,7 +192,8 @@ oobiIpexButtonTextMap.set("3_3_response_validated", "Issue Credential"); // acti
  */
 const canIpexStateProceed = (state: OobiIpexState): boolean => {
   return (
-    state === "2_2_response_received" ||
+    state === "1_init" ||
+    state === "2_1_challenge_sent" ||
     state === "3_1_challenge_received" ||
     state === "3_3_response_validated"
   );

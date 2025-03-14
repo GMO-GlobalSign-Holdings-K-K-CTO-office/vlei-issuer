@@ -176,6 +176,10 @@ const challengeWord = ref("");
 const generateChallenge = async () => {
   const repository = await Signifies.getInstance();
   challengeWord.value = await repository.generateChallenge();
+
+  // TODO: Signifiesに移行する
+  sessionStorage.setItem(`challenge-${contact.value?.id}`, challengeWord.value);
+
   challengeGenSnackbar.value = true;
 };
 
