@@ -27,7 +27,7 @@ const router = createRouter({
           meta: { title: "Holde List" },
         },
         {
-          path: "/holder-detail/:pre/",
+          path: "/holder-detail/:aid/",
           name: "HolderDetail",
           component: HolderDetail,
           meta: { title: "Holder Detail" },

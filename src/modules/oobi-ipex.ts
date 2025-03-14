@@ -138,3 +138,32 @@ export type OobiIpexState =
   | "4_1_issuing_credential" // 発行中
   | "4_2_credential_issued" // 発行済み
   | "5_1_credential_revoked"; // 通知受理
+
+const formatStateMap: Map<OobiIpexState, string> = new Map();
+formatStateMap.set("1_init", "Init");
+formatStateMap.set("2_1_challenge_sent", "My Challenge Sent / NONE");
+formatStateMap.set("2_2_response_received", "Your Response Received / NONE");
+formatStateMap.set("2_3_response_validated", "Your Response Validated / NONE");
+formatStateMap.set(
+  "3_1_challenge_received",
+  "Your Response Validated / Your Challenge Received",
+);
+formatStateMap.set(
+  "3_2_response_sent",
+  "Your Response Validated / My Response Sent",
+);
+formatStateMap.set(
+  "3_3_response_validated",
+  "Your Response Validate / My Response Validated",
+);
+formatStateMap.set("4_1_issuing_credential", "Credential Received");
+formatStateMap.set("4_2_credential_issued", "Credential Accepted");
+formatStateMap.set("5_1_credential_revoked", "Credential Revoked");
+
+export const formatState = (state: OobiIpexState) => {
+  const formatted = formatStateMap.get(state);
+  if (!formatted) {
+    throw new IllegalStateException("State not found.");
+  }
+  return formatted;
+};

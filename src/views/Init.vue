@@ -60,6 +60,14 @@
       </v-btn>
     </template>
   </v-snackbar>
+  <v-snackbar
+    v-model="secretCopiedSnackbar"
+    location="center"
+    color="accent"
+    timeout="2000"
+  >
+    <div class="d-flex justify-center">Secret Copied!</div>
+  </v-snackbar>
 </template>
 <script setup lang="ts">
 import { ref, onMounted, type Ref } from "vue";

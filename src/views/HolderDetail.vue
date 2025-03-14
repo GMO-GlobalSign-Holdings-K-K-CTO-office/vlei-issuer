@@ -5,16 +5,23 @@
         <v-table class="elevation-2" style="width: 50%">
           <thead>
             <tr>
-              <th class="text-left">Item</th>
-              <th class="text-left">Value</th>
+              <th class="text-left text-secondary">Item</th>
+              <th class="text-left text-secondary">Value</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(value, key) in contact" :key="key">
-              <td>{{ key }}</td>
-              <td>
-                {{ value }}
-              </td>
+              <template v-if="key !== 'challenges'">
+                <td>{{ key }}</td>
+                <td>
+                  <template v-if="key === 'state'">
+                    {{ formatState(value as OobiIpexState) }}
+                  </template>
+                  <template v-else>
+                    {{ value }}
+                  </template>
+                </td>
+              </template>
             </tr>
           </tbody>
         </v-table>
@@ -108,6 +115,7 @@
 import { onMounted, ref, type Ref } from "vue";
 import { useRoute } from "vue-router";
 import { Signifies, type ExtendedContact } from "@/modules/repository";
+import { formatState, type OobiIpexState } from "@/modules/oobi-ipex";
 import ChallengeAcceptanceDialog from "@/components/ChallengeAcceptanceDialog.vue";
 import CredentialRevocationDialog from "@/components/CredentialRevocationDialog.vue";
 import { IllegalArgumentException } from "@/modules/exception";
@@ -121,11 +129,11 @@ const issuedCredentialId = ref("");
 
 const showDetail = async () => {
   const repository = await Signifies.getInstance();
-  const prefix = route.params.pre;
-  if (Array.isArray(prefix)) {
+  const aid = route.params.aid;
+  if (Array.isArray(aid)) {
     throw new IllegalArgumentException("Invalid pre");
   } else {
-    contact.value = await repository.getHolder(prefix);
+    contact.value = await repository.getHolder(aid);
     console.log(`Contact: ${JSON.stringify(contact.value, null, 2)}`);
 
     const credentialId = await repository.getIssuedCredentialId(

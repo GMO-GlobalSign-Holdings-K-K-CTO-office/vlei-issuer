@@ -7,28 +7,30 @@
         :key="`list-${i}`"
       >
         <v-list-item-title>
-          {{ holder.name }}
+          {{ holder.alias }}
         </v-list-item-title>
-        <v-list-item-subtitle>TBD</v-list-item-subtitle>
+        <v-list-item-subtitle> {{ holder.id }}</v-list-item-subtitle>
         <template v-slot:append>
-          <v-list-item-action>
-            <v-btn
-              variant="outlined"
-              color="secondary"
-              @click="navigateToHolderDetail(holder.id)"
-              >Detail</v-btn
-            >
-          </v-list-item-action>
+          <v-chip color="primary">{{ formatState(holder.state) }}</v-chip>
           <v-list-item-action class="ml-3">
             <v-btn
               variant="outlined"
               color="accent"
-              :disabled="!canIpexStateProceed(holder.state)"
-              :loading="ipexProgressing"
-              @click="progressIpex(holder)"
-              >{{ oobiIpexButtonTextMap.get(holder.state) }}</v-btn
+              @click="navigateToHolderDetail(holder)"
+              >Detail</v-btn
             >
           </v-list-item-action>
+          <template v-if="canIpexStateProceed(holder.state)">
+            <v-list-item-action class="ml-3">
+              <v-btn
+                variant="outlined"
+                color="accent"
+                :loading="ipexProgressing"
+                @click="progressIpex(holder)"
+                >{{ oobiIpexButtonTextMap.get(holder.state) }}</v-btn
+              >
+            </v-list-item-action>
+          </template>
 
           <!-- TODO: 後でprogressIpexにYes/No Dialogつける -->
           <!-- <v-list-item-action>
@@ -70,6 +72,17 @@
         <v-divider class="mt-2"></v-divider>
       </v-list-item>
     </v-list>
+    <div class="float-button-wrapper">
+      <v-btn
+        size="large"
+        icon
+        color="accent"
+        class="mr-3 mb-3"
+        @click="refreshHolderList()"
+      >
+        <v-icon>mdi-refresh</v-icon>
+      </v-btn>
+    </div>
     <holder-register-dialog @holderRegistered="holderRegistered" />
     <v-snackbar
       :timeout="2000"
@@ -106,7 +119,7 @@ import { Signifies, type ExtendedContact } from "@/modules/repository";
 import { ref, onMounted, type Ref } from "vue";
 import { useRouter } from "vue-router";
 import HolderRegisterDialog from "@/components/HolderRegisterDialog.vue";
-import { OobiIpexState } from "@/modules/oobi-ipex";
+import { type OobiIpexState, formatState } from "@/modules/oobi-ipex";
 
 const renderReady = ref(false);
 const holders: Ref<ExtendedContact[]> = ref([]);
@@ -129,9 +142,17 @@ const showHolders = async () => {
   // repository.inspect();
 };
 
+const refreshHolderList = async () => {
+  renderReady.value = false;
+  setTimeout(async () => {
+    await showHolders();
+    renderReady.value = true;
+  }, 700);
+};
+
 const router = useRouter();
-const navigateToHolderDetail = async (pre: string) => {
-  router.push({ name: "HolderDetail", params: { pre } });
+const navigateToHolderDetail = async (holder: ExtendedContact) => {
+  router.push({ name: "HolderDetail", params: { aid: holder.id } });
 };
 
 const noticeAfterIpex = ref(false);
@@ -151,22 +172,16 @@ const progressIpex = async (holder: ExtendedContact) => {
 };
 
 const noticeAfterHolderRegistered = ref(false);
-const MESSAGE_ON_HOLDER_REGISTERED = "New holder registered.";
+const MESSAGE_ON_HOLDER_REGISTERED = "New holder has been registered.";
 const holderRegistered = async () => {
   noticeAfterHolderRegistered.value = true;
   await showHolders();
 };
 
 const oobiIpexButtonTextMap: Map<OobiIpexState, string> = new Map();
-oobiIpexButtonTextMap.set("1_init", "Init");
-oobiIpexButtonTextMap.set("2_1_challenge_sent", "Challenge Sent");
 oobiIpexButtonTextMap.set("2_2_response_received", "Validate Response"); // active
-oobiIpexButtonTextMap.set("2_3_response_validated", "Response Validated");
 oobiIpexButtonTextMap.set("3_1_challenge_received", "Send Response"); // active
-oobiIpexButtonTextMap.set("3_2_response_sent", "Response Sent");
 oobiIpexButtonTextMap.set("3_3_response_validated", "Issue Credential"); // active
-oobiIpexButtonTextMap.set("4_1_issuing_credential", "Issueing Credential");
-oobiIpexButtonTextMap.set("4_2_credential_issued", "Credential Issued");
 
 /**
  *  Check if the Ipex State can proceed.
@@ -182,4 +197,15 @@ const canIpexStateProceed = (state: OobiIpexState): boolean => {
   );
 };
 </script>
-<style scoped></style>
+<style scoped>
+.float-button-wrapper {
+  width: 5vw;
+  left: 90vw;
+  height: 5vh;
+  top: 95vh;
+  position: fixed;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+</style>
