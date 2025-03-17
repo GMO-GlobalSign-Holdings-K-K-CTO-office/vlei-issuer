@@ -476,24 +476,28 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     const holders = await this.client.contacts().list();
     console.log(`Holders: ${JSON.stringify(holders, null, 2)}`);
 
+    // TODO: Temporal code for Notification
+    const notificationList = await this.client.notifications().list();
+    console.log(
+      `Notification List: ${JSON.stringify(notificationList, null, 2)}`,
+    );
+
     const extendHolders = async (holder: Contact): Promise<ExtendedContact> => {
-      const currentState = await this.getIpexState(holder.id);
+      let currentState = await this.getIpexState(holder.id);
 
       // TODO: Important!!!
       // 各種NotificationHandlerを用意し、それをMapに格納する。
       // 各種NotificationHandlerは、IpexStateを受け取り、そのStateに対応する処理を行う。
       // 具体的には、parameterのstateに応じたNotificationの取得にトライし、存在すればStateを変更する。
       // setState,getState含めてStateManagerを作り、その中でNotificationHandlerを呼び出すのもあり。
-
-      // NotificationからHolder Responseの取得
-      // TODO: **Notification**の取得
-      //    Statusの設定の中で、Response受信のNotification情報を取得して、存在すればStatusに2_2_response_receivedを設定する。
-      //    Contatに対しNotificationを設定し画面に返し、ボタンが活性化される。(Validateへ)
-      // 参考: github.com/WebOfTrust/signify-ts/blob/cddb00713ce7b09b3f18acdaae559703759369bc/examples/integration-scripts/utils/test-util.ts#L479
-      const notificationList = await this.client.notifications().list();
-      console.log(
-        `Notification List: ${JSON.stringify(notificationList, null, 2)}`,
-      );
+      if (currentState === "1_init") {
+        // TODO: key存在の確認とType Guard実行
+        const challengesInContact = holder.challenges as object[];
+        if (challengesInContact.length > 0) {
+          currentState = "2_2_response_received";
+          await this.setIpexState(currentState, holder.id);
+        }
+      }
 
       return {
         ...holder,
@@ -529,10 +533,13 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     const holder = await this.client.contacts().get(aid);
     console.log("Holder: ", holder);
 
+    // TODO: key存在の確認とType Guard実行
+    const challenges = holder.challenges as any[];
+
     const extendedHolder: ExtendedContact = {
       ...holder,
       state: await this.getIpexState(holder.id),
-      challenges: holder.challenges as string[],
+      challenges: challenges[0].words as string[],
     };
     return extendedHolder;
   }

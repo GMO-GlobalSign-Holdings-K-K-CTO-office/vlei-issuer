@@ -162,6 +162,7 @@ export type OobiIpexState =
   | "4_2_credential_issued" // 発行済み
   | "5_1_credential_revoked"; // 通知受理
 
+// TODO: common.tsを作り移動する
 const formatStateMap: Map<OobiIpexState, string> = new Map();
 formatStateMap.set("1_init", "Init");
 formatStateMap.set("2_1_challenge_sent", "My Challenge Sent / NONE");

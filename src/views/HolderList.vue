@@ -180,7 +180,7 @@ const holderRegistered = async () => {
 
 const oobiIpexButtonTextMap: Map<OobiIpexState, string> = new Map();
 oobiIpexButtonTextMap.set("1_init", "Challenge Sent?");
-oobiIpexButtonTextMap.set("2_1_challenge_sent", "Validate Response");
+oobiIpexButtonTextMap.set("2_2_response_received", "Validate Response");
 oobiIpexButtonTextMap.set("3_1_challenge_received", "Send Response");
 oobiIpexButtonTextMap.set("3_3_response_validated", "Issue Credential");
 
@@ -191,12 +191,7 @@ oobiIpexButtonTextMap.set("3_3_response_validated", "Issue Credential");
  * @returns can proceed or not
  */
 const canIpexStateProceed = (state: OobiIpexState): boolean => {
-  return (
-    state === "1_init" ||
-    state === "2_1_challenge_sent" ||
-    state === "3_1_challenge_received" ||
-    state === "3_3_response_validated"
-  );
+  return oobiIpexButtonTextMap.has(state);
 };
 </script>
 <style scoped>
