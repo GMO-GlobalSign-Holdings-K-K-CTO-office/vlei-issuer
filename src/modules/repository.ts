@@ -539,8 +539,10 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     const extendedHolder: ExtendedContact = {
       ...holder,
       state: await this.getIpexState(holder.id),
-      challenges: challenges[0].words as string[],
+      challenges:
+        challenges.length > 0 ? (challenges[0].words as string[]) : [],
     };
+
     return extendedHolder;
   }
 
