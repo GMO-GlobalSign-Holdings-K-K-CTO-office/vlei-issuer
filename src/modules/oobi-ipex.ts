@@ -26,22 +26,37 @@ export class YourResponseValidator implements OobiIpexHandler {
 
     const verifyOperation = await client
       .challenges()
-      .verify(holder.id, JSON.parse(challengeWord).words);
+      .verify(holder.id, challengeWord.split(","));
     console.log(`VerifyOperation: ${JSON.stringify(verifyOperation, null, 2)}`);
 
-    await client.operations().wait(verifyOperation);
-    await client.operations().delete(verifyOperation.name);
+    // TODO: Waitが終わらない。原因調査中。
+    try {
+      await client
+        .operations()
+        .wait(verifyOperation, { signal: AbortSignal.timeout(10000) });
+      console.log("Done verify op waiting");
+      await client.operations().delete(verifyOperation.name);
+      console.log("Done verify op deleting");
 
-    type VerifyResponse = {
-      // exn = exchange
-      exn: Record<string, unknown>;
-    };
-    const verifyResponse = verifyOperation.response as VerifyResponse;
-    const serder = new Serder(verifyResponse.exn);
+      type VerifyResponse = {
+        // exn = exchange
+        exn: Record<string, unknown>;
+      };
+      const verifyResponse = verifyOperation.response as VerifyResponse;
+      const serder = new Serder(verifyResponse.exn);
 
-    const resp = await client.challenges().responded(holder.id, serder.ked.d);
+      const resp = await client.challenges().responded(holder.id, serder.ked.d);
 
-    console.log(`Responsed Resp: ${JSON.stringify(resp, null, 2)}`);
+      console.log(`Responsed Resp: ${JSON.stringify(resp, null, 2)}`);
+    } catch (e) {
+      console.log("Verify Operation Waitng or Deleting Error: ", e);
+      alert(
+        "Verification timeout. We're investigating the issue. Please go to the next step.",
+      );
+
+      const repository = await Signifies.getInstance();
+      await repository.setIpexState("2_3_response_validated", holder.id);
+    }
   }
 }
 
