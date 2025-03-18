@@ -94,7 +94,10 @@ export class Signifies {
           const ipexHandlerMap: Map<OobiIpexState, OobiIpexHandler> = new Map();
           // oobi part
           ipexHandlerMap.set("1_init", new MyChallengeSentCallback());
-          ipexHandlerMap.set("2_1_challenge_sent", new YourResponseValidator());
+          ipexHandlerMap.set(
+            "2_2_response_received",
+            new YourResponseValidator(),
+          );
           ipexHandlerMap.set("3_1_challenge_received", new MyResponseSender());
 
           // ipex part
@@ -533,14 +536,16 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     const holder = await this.client.contacts().get(aid);
     console.log("Holder: ", holder);
 
-    // TODO: key存在の確認とType Guard実行
-    const challenges = holder.challenges as any[];
+    // TODO: Type Guard
+    const challenges = holder.challenges as any[] | undefined;
 
     const extendedHolder: ExtendedContact = {
       ...holder,
       state: await this.getIpexState(holder.id),
       challenges:
-        challenges.length > 0 ? (challenges[0].words as string[]) : [],
+        challenges && challenges.length > 0
+          ? (challenges[0].words as string[])
+          : [],
     };
 
     return extendedHolder;
