@@ -78,8 +78,8 @@ export class MyResponseSender implements OobiIpexHandler {
     // TODO: Temporary
     // verifyが終わらないため、とりあえず次のステップに進む
     setTimeout(async () => {
-      await repository.setIpexState("2_3_response_validated", issuer.id);
-    }, 30000);
+      await repository.setIpexState("3_3_response_validated", holder.id);
+    }, 10000);
   }
 }
 
@@ -173,18 +173,18 @@ const formatStateMap: Map<OobiIpexState, string> = new Map();
 formatStateMap.set("1_init", "Init");
 formatStateMap.set("2_1_challenge_sent", "My Challenge Sent / NONE");
 formatStateMap.set("2_2_response_received", "Your Response Received / NONE");
-formatStateMap.set("2_3_response_validated", "Your Response Validated / NONE");
+formatStateMap.set("2_3_response_validated", "Your Response Verified / NONE");
 formatStateMap.set(
   "3_1_challenge_received",
-  "Your Response Validated / Your Challenge Received",
+  "Your Response Verified / Your Challenge Received",
 );
 formatStateMap.set(
   "3_2_response_sent",
-  "Your Response Validated / My Response Sent",
+  "Your Response Verified / My Response Sent",
 );
 formatStateMap.set(
   "3_3_response_validated",
-  "Your Response Validate / My Response Validated",
+  "Your Response Verified / My Response Verified",
 );
 formatStateMap.set("4_1_issuing_credential", "Credential Received");
 formatStateMap.set("4_2_credential_issued", "Credential Accepted");

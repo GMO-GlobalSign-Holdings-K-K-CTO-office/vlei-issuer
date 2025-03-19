@@ -493,7 +493,7 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
       // 各種NotificationHandlerは、IpexStateを受け取り、そのStateに対応する処理を行う。
       // 具体的には、parameterのstateに応じたNotificationの取得にトライし、存在すればStateを変更する。
       // setState,getState含めてStateManagerを作り、その中でNotificationHandlerを呼び出すのもあり。
-      if (currentState === "1_init") {
+      if (currentState === "2_1_challenge_sent") {
         // TODO: key存在の確認とType Guard実行
         const challengesInContact = holder.challenges as object[];
         if (challengesInContact.length > 0) {

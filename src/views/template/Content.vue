@@ -52,10 +52,10 @@
     <v-snackbar
       v-model="oobiSnackbar"
       color="accent"
-      multi-line
       timeout="10000"
-      vertical
       variant="outlined"
+      vertical
+      multi-line
     >
       {{ oobi }}
       <template v-slot:actions>
