@@ -102,6 +102,8 @@ export class AcdcIssuer implements OobiIpexHandler {
       LEI: holder.name,
     };
 
+    console.log("schemas before issue:", await client.schemas().list());
+
     // Note: MVPではQVI vLEI CredentialとChainさせて発行する。以下を参考にする。
     // In the MVP, it will be issued with chaining the QVI vLEI Credential. Refer to the following for reference.
     //   https://github.com/WebOfTrust/signify-ts/blob/main/examples/integration-scripts/credentials.test.ts#L498
@@ -168,7 +170,7 @@ export type OobiIpexState =
   | "4_2_credential_issued" // 発行済み
   | "5_1_credential_revoked"; // 通知受理
 
-// TODO: common.tsを作り移動する
+// TODO: common.tsを作り移動する(bob=holde対応済みなのでそっちみてやる)
 const formatStateMap: Map<OobiIpexState, string> = new Map();
 formatStateMap.set("1_init", "Init");
 formatStateMap.set("2_1_challenge_sent", "My Challenge Sent / NONE");
