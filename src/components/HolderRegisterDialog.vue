@@ -87,7 +87,8 @@ const uiState: {
 } = reactive({
   dialog: false,
   loader: false,
-  lei: undefined,
+  // default value
+  lei: "353800KCIOO2YWF3VP62",
   oobi: undefined,
   leiRule: [(v: string) => !!v || "LEI is required."],
   oobiRule: [(v: string) => !!v || "OOBI is required."],

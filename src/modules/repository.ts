@@ -102,7 +102,7 @@ export class Signifies {
 
           // ipex part
           ipexHandlerMap.set("3_3_response_validated", new AcdcIssuer());
-          ipexHandlerMap.set("4_2_credential_issued", new AdmitMarker());
+          ipexHandlerMap.set("4_1_issuing_credential", new AdmitMarker());
 
           const defaultInstance = new SignifyRepositoryDefaultImpl(
             client,
@@ -327,12 +327,12 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
       };
 
       // const inceptionEventArgs: CreateIdentiferArgs = {};
-      // const witsAids = import.meta.env.VITE_WITNESS_AIDS;
-      // if (witsAids) {
-      //   inceptionEventArgs.wits = [...witsAids.split(",")];
+      // const witsUrls = import.meta.env.VITE_WITNESS_URLS;
+      // if (witsUrls) {
+      //   inceptionEventArgs.wits = [...witsUrls.split(",")];
       //   inceptionEventArgs.toad = 1;
       // } else {
-      //   throw new IllegalStateException("WITNESS_AIDS is not set.");
+      //   throw new IllegalStateException("WITNESS_URL is not set.");
       // }
 
       const inceptionEvent = await this.client
@@ -390,9 +390,11 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
       `Schema OOBI Resolution Result: ${JSON.stringify(resolveResult, null, 2)}`,
     );
 
-    //const resolveOp = await resolveResult.op();
-    // await this.client.operations().wait(resolveOp);
-    // await this.client.operations().delete(resolveOp.name);
+    console.log("Schemas:", await this.client.schemas().list());
+
+    const schemaOp = await this.client.operations().get(resolveResult.name);
+    await this.client.operations().wait(schemaOp);
+    await this.client.operations().delete(schemaOp.name);
   }
 
   /**
@@ -479,14 +481,26 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     const holders = await this.client.contacts().list();
     console.log(`Holders: ${JSON.stringify(holders, null, 2)}`);
 
-    // TODO: Temporal code for Notification
+    // TODO: Temporal codes
     const notificationList = await this.client.notifications().list();
     console.log(
       `Notification List: ${JSON.stringify(notificationList, null, 2)}`,
     );
+    console.log("Schemas:", await this.client.schemas().list());
+    console.log(
+      `Schema: ${JSON.stringify(await this.client.schemas().get(QVI_SCHEMA_SAID), null, 2)}`,
+    );
 
     const extendHolders = async (holder: Contact): Promise<ExtendedContact> => {
       let currentState = await this.getIpexState(holder.id);
+      let notification: AdmitNotification | undefined = undefined;
+      const tmpHolder: ExtendedContact = {
+        ...holder,
+        state: currentState,
+        // TODO: Type Guard実行
+        challenges: holder.challenges as string[],
+        notification,
+      };
 
       // TODO: Important!!!
       // 各種NotificationHandlerを用意し、それをMapに格納する。
@@ -500,14 +514,28 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
           currentState = "2_2_response_received";
           await this.setIpexState(currentState, holder.id);
         }
+      } else if (currentState === "4_1_issuing_credential") {
+        const notifyResponse = (await this.client.notifications().list()) as {
+          notes: AdmitNotification[];
+        };
+
+        const noteList = notifyResponse.notes.filter(
+          (note) => note.a.r === "/exn/ipex/admit" && note.r === false,
+        );
+        console.log("filtered noteList:", noteList);
+
+        if (noteList.length) {
+          if (noteList.length === 1) {
+            // OOBI Sessionが終わるとシステム全体でAdmitのNotificationが0になるため、ここは1で固定で。
+            await this.setIpexState(currentState, holder.id);
+            notification = noteList[0];
+            tmpHolder.notification = notification;
+            await this.progressIpex(tmpHolder);
+          }
+        }
       }
 
-      return {
-        ...holder,
-        state: currentState,
-        // TODO: key存在の確認とType Guard実行
-        challenges: holder.challenges as string[],
-      };
+      return tmpHolder;
     };
 
     const extendedHolders = await Promise.all(holders.map(extendHolders));

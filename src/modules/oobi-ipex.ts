@@ -96,14 +96,6 @@ export class AcdcIssuer implements OobiIpexHandler {
     };
     const registry: Registry = registries[0];
 
-    // Note: I want to make it more versatile, but for now, I'll keep it fixed.
-    // もっと汎用的な作りにしたいが、とりあえずQVI vLEIに固定的にする。
-    const vcdata = {
-      LEI: holder.name,
-    };
-
-    console.log("schemas before issue:", await client.schemas().list());
-
     // Note: MVPではQVI vLEI CredentialとChainさせて発行する。以下を参考にする。
     // In the MVP, it will be issued with chaining the QVI vLEI Credential. Refer to the following for reference.
     //   https://github.com/WebOfTrust/signify-ts/blob/main/examples/integration-scripts/credentials.test.ts#L498
@@ -112,20 +104,25 @@ export class AcdcIssuer implements OobiIpexHandler {
       s: QVI_SCHEMA_SAID,
       a: {
         i: holder.id,
-        ...vcdata,
+        LEI: holder.alias,
       },
     });
     console.log(`IssResult: ${JSON.stringify(issueResult, null, 2)}`);
 
     const issueOp = issueResult.op;
-    client.operations().wait(issueOp);
-    client.operations().delete(issueOp.name);
+    const issueOpWaitResult = await client.operations().wait(issueOp);
+    console.log(
+      `IssueOperationWaitResult: ${JSON.stringify(issueOpWaitResult, null, 2)}`,
+    );
+
+    await client.operations().delete(issueOp.name);
 
     //--------------------------
 
     // issueResultとCredentialの型が異なるので、一度Credentialをretrieveする。
     // Since the types of issueResult and Credential are different, Credential will be retrieved once.
     const credential = await client.credentials().get(issueResult.acdc.ked.d);
+    console.log(`Retrieved Credential: ${JSON.stringify(credential, null, 2)}`);
 
     const [grant, gsigs, gend] = await client.ipex().grant({
       senderName: issuerAid.name,
@@ -136,13 +133,23 @@ export class AcdcIssuer implements OobiIpexHandler {
       recipient: holder.id,
       datetime: new Date().toISOString().replace("Z", "000+00:00"),
     });
+    console.log(`grant: ${JSON.stringify(grant, null, 2)}`);
+    console.log(`gsigs: ${JSON.stringify(gsigs, null, 2)}`);
+    console.log(`gend: ${JSON.stringify(gend, null, 2)}`);
 
     const grantOp = await client
       .ipex()
       .submitGrant(issuerAid.name, grant, gsigs, gend, [holder.id]);
+    console.log(`GrantSubmissionResponse: ${JSON.stringify(grantOp, null, 2)}`);
 
-    client.operations().wait(grantOp);
-    client.operations().delete(grantOp.name);
+    const grantOpWaitDone = await client.operations().wait(grantOp);
+    console.log(
+      `GrantOperationWaitDone: ${JSON.stringify(grantOpWaitDone, null, 2)}`,
+    );
+    await client.operations().delete(grantOp.name);
+
+    const repository = await Signifies.getInstance();
+    await repository.setIpexState("4_1_issuing_credential", holder.id);
   }
 }
 
@@ -155,6 +162,10 @@ export class AdmitMarker implements OobiIpexHandler {
 
     await client.notifications().mark(holder.notification.i);
     await client.notifications().delete(holder.notification.i);
+    console.log("Done Notification Mark and Delete for Credential Issuance");
+
+    const repository = await Signifies.getInstance();
+    await repository.setIpexState("4_2_credential_issued", holder.id);
   }
 }
 
@@ -188,8 +199,8 @@ formatStateMap.set(
   "3_3_response_validated",
   "Your Response Verified / My Response Verified",
 );
-formatStateMap.set("4_1_issuing_credential", "Credential Received");
-formatStateMap.set("4_2_credential_issued", "Credential Accepted");
+formatStateMap.set("4_1_issuing_credential", "Issuing Credential...");
+formatStateMap.set("4_2_credential_issued", "Credential Issued");
 formatStateMap.set("5_1_credential_revoked", "Credential Revoked");
 
 export const formatState = (state: OobiIpexState) => {
