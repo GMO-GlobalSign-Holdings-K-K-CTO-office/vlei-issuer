@@ -249,7 +249,7 @@ export interface SignifyRepository {
   /**
    * Revoke Credential.
    */
-  revokeCredential(credentialId: string): Promise<void>;
+  revokeCredential(credentialId: string, holder: string): Promise<void>;
 
   /**
    * Get Issued Credential Id.
@@ -643,7 +643,10 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
   /**
    * Revoke Credential.
    */
-  public async revokeCredential(credentialId: string): Promise<void> {
+  public async revokeCredential(
+    credentialId: string,
+    holderId: string,
+  ): Promise<void> {
     const revocationResult = await this.client
       .credentials()
       .revoke(AID_NAME, credentialId);
@@ -652,6 +655,8 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     const revocationOp = revocationResult.op;
     await this.client.operations().wait(revocationOp);
     await this.client.operations().delete(revocationOp.name);
+
+    this.setIpexState("5_1_credential_revoked", holderId);
   }
 
   /**
@@ -663,6 +668,7 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     holderAid: string,
   ): Promise<string | null> {
     const myAid = this.createOrRetrieveAid();
+    // TODO: Type Guard
     const credentials = (await this.client.credentials().list({
       filter: {
         "-i": myAid,
@@ -670,13 +676,13 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
         "-a-i": holderAid,
       },
     })) as any[];
-    console.log(`Issued Credentials for Holder {}`, credentials);
+    console.log(`Issued Credentials for Holder:${holderAid}`, credentials);
 
     if (!credentials || credentials.length === 0) {
       return null;
     } else {
-      // Holderに対し発行VC数は、1つの前提
-      return credentials[0].id;
+      // 各Holderに対し発行VC数は、1つの前提
+      return credentials[0].sad.d;
     }
   }
 
@@ -693,7 +699,7 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     // このままでいいのか、検討が必要。
 
     const state = localStorage.getItem(
-      `IpexState + ${holderAid}`,
+      `IpexState:${holderAid}`,
     ) as OobiIpexState | null;
     if (!state) {
       throw new IllegalStateException("Ipex State is not set.");
@@ -717,7 +723,7 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     // App Backendから取得するのか、またはAgentから取得するのか
     // このままでいいのか、検討が必要。
 
-    localStorage.setItem(`IpexState + ${holderAid}`, state);
+    localStorage.setItem(`IpexState:${holderAid}`, state);
   }
 
   /**

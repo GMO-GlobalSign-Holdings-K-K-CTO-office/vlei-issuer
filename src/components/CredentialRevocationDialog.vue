@@ -49,6 +49,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  holderId: {
+    type: String,
+    required: true,
+  },
 });
 
 const emit = defineEmits<{
@@ -63,7 +67,7 @@ const revokeCredential = async () => {
   revocationLoader.value = true;
 
   const repository = await Signifies.getInstance();
-  await repository.revokeCredential(props.credentialId);
+  await repository.revokeCredential(props.credentialId, props.holderId);
 
   revocationLoader.value = false;
   revocationDialog.value = false;

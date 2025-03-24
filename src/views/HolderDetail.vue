@@ -32,17 +32,18 @@
         <credential-revocation-dialog
           @credentialRevoked="credentialRevoked"
           :credentialId="issuedCredentialId"
+          :holderId="contact.id"
         />
-        <v-snackbar
-          v-model="credentialRevokedSnackbar"
-          close-on-content-click
-          color="accent"
-          timeout="2000"
-          variant="tonal"
-        >
-          <div class="d-flex justify-center">Credential Revoked</div>
-        </v-snackbar>
       </template>
+      <v-snackbar
+        v-model="credentialRevokedSnackbar"
+        close-on-content-click
+        color="accent"
+        timeout="2000"
+        variant="tonal"
+      >
+        <div class="d-flex justify-center">Credential Revoked</div>
+      </v-snackbar>
 
       <!-- Challenge Acceptance Part -->
       <challenge-acceptance-dialog
