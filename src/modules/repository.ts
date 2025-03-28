@@ -322,18 +322,18 @@ class SignifyRepositoryDefaultImpl implements SignifyRepository {
     }
 
     if (!aid) {
-      const inceptionEventArgs: CreateIdentiferArgs = {
-        toad: 0,
-      };
+      // const inceptionEventArgs: CreateIdentiferArgs = {
+      //   toad: 0,
+      // };
 
-      // const inceptionEventArgs: CreateIdentiferArgs = {};
-      // const witsUrls = import.meta.env.VITE_WITNESS_URLS;
-      // if (witsUrls) {
-      //   inceptionEventArgs.wits = [...witsUrls.split(",")];
-      //   inceptionEventArgs.toad = 1;
-      // } else {
-      //   throw new IllegalStateException("WITNESS_URL is not set.");
-      // }
+      const inceptionEventArgs: CreateIdentiferArgs = {};
+      const witsUrls = import.meta.env.VITE_WITNESS_URLS;
+      if (witsUrls) {
+        inceptionEventArgs.wits = [...witsUrls.split(",")];
+        inceptionEventArgs.toad = 5;
+      } else {
+        throw new IllegalStateException("WITNESS_URL is not set.");
+      }
 
       const inceptionEvent = await this.client
         .identifiers()
