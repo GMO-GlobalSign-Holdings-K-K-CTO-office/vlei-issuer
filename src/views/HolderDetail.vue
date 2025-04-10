@@ -28,7 +28,7 @@
       </v-row>
 
       <!-- Credential Revocation Part -->
-      <template v-if="issuedCredentialFound">
+      <template v-if="issuedCredentialFound && contact">
         <credential-revocation-dialog
           @credentialRevoked="credentialRevoked"
           :credentialId="issuedCredentialId"
@@ -119,7 +119,10 @@ import { Signifies, type ExtendedContact } from "@/modules/repository";
 import { formatState, type OobiIpexState } from "@/modules/oobi-ipex";
 import ChallengeAcceptanceDialog from "@/components/ChallengeAcceptanceDialog.vue";
 import CredentialRevocationDialog from "@/components/CredentialRevocationDialog.vue";
-import { IllegalArgumentException } from "@/modules/exception";
+import {
+  IllegalArgumentException,
+  IllegalStateException,
+} from "@/modules/exception";
 
 const route = useRoute();
 const renderReady = ref(false);
@@ -146,9 +149,6 @@ const showDetail = async () => {
       issuedCredentialId.value = credentialId;
     }
   }
-
-  // for debugging purpose only
-  // await repository.inspect();
 };
 
 // Credential Revocation Part
@@ -178,9 +178,10 @@ const generateChallenge = async () => {
   const repository = await Signifies.getInstance();
   challengeWord.value = await repository.generateChallenge();
 
-  // TODO: Signifiesに移行する
-  sessionStorage.setItem(`challenge-${contact.value?.id}`, challengeWord.value);
-
+  if (!contact.value) {
+    throw new IllegalStateException("Contact is not defined");
+  }
+  Signifies.setChallengeWord(contact.value, challengeWord.value);
   challengeGenSnackbar.value = true;
 };
 

@@ -132,6 +132,14 @@ export class Signifies {
     return !!this.getMasterSecret();
   };
 
+  static setChallengeWord(contact: ExtendedContact, challengeWord: string) {
+    sessionStorage.setItem(`challenge-${contact.id}`, challengeWord);
+  }
+
+  static getChallengeWord(contact: ExtendedContact): string | null {
+    return sessionStorage.getItem(`challenge-${contact.id}`);
+  }
+
   /**
    * Generate a master secret.
    * @returns master secret

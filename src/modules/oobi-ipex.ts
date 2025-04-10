@@ -18,8 +18,7 @@ export class MyChallengeSentCallback implements OobiIpexHandler {
 @LogAllMethods
 export class YourResponseValidator implements OobiIpexHandler {
   async progress(client: SignifyClient, holder: ExtendedContact) {
-    // TODO: Signifiesに移行する
-    const challengeWord = sessionStorage.getItem(`challenge-${holder.id}`);
+    const challengeWord = Signifies.getChallengeWord(holder);
     if (!challengeWord) {
       throw new Error("Challenge not found.");
     }
