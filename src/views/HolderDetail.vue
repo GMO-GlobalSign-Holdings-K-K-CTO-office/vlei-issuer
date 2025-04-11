@@ -15,7 +15,7 @@
                 <td>{{ key }}</td>
                 <td>
                   <template v-if="key === 'state'">
-                    {{ formatState(value as OobiIpexState) }}
+                    {{ getStateLabel(value as OobiIpexState) }}
                   </template>
                   <template v-else>
                     {{ value }}
@@ -116,13 +116,14 @@
 import { onMounted, ref, type Ref } from "vue";
 import { useRoute } from "vue-router";
 import { Signifies, type ExtendedContact } from "@/modules/repository";
-import { formatState, type OobiIpexState } from "@/modules/oobi-ipex";
+import { type OobiIpexState } from "@/modules/oobi-ipex";
 import ChallengeAcceptanceDialog from "@/components/ChallengeAcceptanceDialog.vue";
 import CredentialRevocationDialog from "@/components/CredentialRevocationDialog.vue";
 import {
   IllegalArgumentException,
   IllegalStateException,
 } from "@/modules/exception";
+import { getStateLabel } from "@/modules/view-common";
 
 const route = useRoute();
 const renderReady = ref(false);

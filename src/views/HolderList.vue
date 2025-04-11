@@ -11,7 +11,7 @@
         </v-list-item-title>
         <v-list-item-subtitle> {{ holder.id }}</v-list-item-subtitle>
         <template v-slot:append>
-          <v-chip color="primary">{{ formatState(holder.state) }}</v-chip>
+          <v-chip color="primary">{{ getStateLabel(holder.state) }}</v-chip>
           <v-list-item-action class="ml-3">
             <v-btn
               variant="outlined"
@@ -27,7 +27,7 @@
                 color="accent"
                 :loading="ipexProgressing"
                 @click="progressIpex(holder)"
-                >{{ oobiIpexButtonTextMap.get(holder.state) }}</v-btn
+                >{{ getActionLabel(holder.state) }}</v-btn
               >
             </v-list-item-action>
           </template>
@@ -119,7 +119,11 @@ import { Signifies, type ExtendedContact } from "@/modules/repository";
 import { ref, onMounted, type Ref } from "vue";
 import { useRouter } from "vue-router";
 import HolderRegisterDialog from "@/components/HolderRegisterDialog.vue";
-import { type OobiIpexState, formatState } from "@/modules/oobi-ipex";
+import {
+  getStateLabel,
+  canIpexStateProceed,
+  getActionLabel,
+} from "@/modules/view-common";
 
 const renderReady = ref(false);
 const holders: Ref<ExtendedContact[]> = ref([]);
@@ -176,22 +180,6 @@ const MESSAGE_ON_HOLDER_REGISTERED = "New holder has been registered.";
 const holderRegistered = async () => {
   noticeAfterHolderRegistered.value = true;
   await showHolders();
-};
-
-const oobiIpexButtonTextMap: Map<OobiIpexState, string> = new Map();
-oobiIpexButtonTextMap.set("1_init", "Challenge Sent?");
-oobiIpexButtonTextMap.set("2_2_response_received", "Verify Response");
-oobiIpexButtonTextMap.set("3_1_challenge_received", "Send Response");
-oobiIpexButtonTextMap.set("3_3_response_validated", "Issue Credential");
-
-/**
- *  Check if the Ipex State can proceed.
- *
- * @param state Ipex State
- * @returns can proceed or not
- */
-const canIpexStateProceed = (state: OobiIpexState): boolean => {
-  return oobiIpexButtonTextMap.has(state);
 };
 </script>
 <style scoped>
